@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items version="2" >
+
+    <item
+        jar="C:\Work\nativescript-hack\RUNTIME\app\build\intermediates\exploded-aar\RUNTIME\binding-generator\unspecified\jars\classes.jar"
+        jumboMode="false"
+        revision="23.0.0"
+        sha1="ed4036147321cb14a77a7bb3ef55fc74442a0692">
+        <dex dex="C:\Work\nativescript-hack\RUNTIME\app\build\intermediates\pre-dexed\arm7\debug\classes-a5d96e4a0579053cc581a98198cf6599e39c0b35.jar" />
+    </item>
+    <item
+        jar="C:\Work\nativescript-hack\RUNTIME\app\build\intermediates\exploded-aar\com.android.support\support-v4\23.0.1\jars\classes.jar"
+        jumboMode="false"
+        revision="23.0.0"
+        sha1="c31e21b53ff2f74664e498248d01453a32e32d48">
+        <dex dex="C:\Work\nativescript-hack\RUNTIME\app\build\intermediates\pre-dexed\arm7\debug\classes-df6a8f2902c2b164263a3c32ca9ec051ac983166.jar" />
+    </item>
+    <item
+        jar="C:\Work\nativescript-hack\RUNTIME\app\build\intermediates\exploded-aar\com.android.support\appcompat-v7\23.0.1\jars\classes.jar"
+        jumboMode="false"
+        revision="23.0.0"
+        sha1="d86429b0f0b3f3cafbeb78dda1b9d89119ccb05d">
+        <dex dex="C:\Work\nativescript-hack\RUNTIME\app\build\intermediates\pre-dexed\arm7\debug\classes-2ddd780f273c607d981ecab860732f512ecaae6d.jar" />
+    </item>
+    <item
+        jar="C:\Work\nativescript-hack\RUNTIME\app\build\intermediates\exploded-aar\RUNTIME\binding-generator\unspecified\jars\libs\asm-5.0.3.jar"
+        jumboMode="false"
+        revision="23.0.0"
+        sha1="dcc2193db20e19e1feca8b1240dbbc4e190824fa">
+        <dex dex="C:\Work\nativescript-hack\RUNTIME\app\build\intermediates\pre-dexed\arm7\debug\asm-5.0.3-d8d1d8e436f6ae43670ddf375c61fde8e1d9a187.jar" />
+    </item>
+    <item
+        jar="D:\adt-bundle-windows-x86_64-20140702\sdk\extras\android\m2repository\com\android\support\support-annotations\23.0.1\support-annotations-23.0.1.jar"
+        jumboMode="false"
+        revision="23.0.0"
+        sha1="1fce89a6428c51467090d7f424e4c9c3dbd55f7e">
+        <dex dex="C:\Work\nativescript-hack\RUNTIME\app\build\intermediates\pre-dexed\arm7\debug\support-annotations-23.0.1-c80a847b1684fd6646121455b3635ca07813fa2f.jar" />
+    </item>
+    <item
+        jar="C:\Work\nativescript-hack\RUNTIME\app\build\intermediates\exploded-aar\RUNTIME\binding-generator\unspecified\jars\libs\asm-commons-5.0.3.jar"
+        jumboMode="false"
+        revision="23.0.0"
+        sha1="a7111830132c7f87d08fe48cb0ca07630f8cb91c">
+        <dex dex="C:\Work\nativescript-hack\RUNTIME\app\build\intermediates\pre-dexed\arm7\debug\asm-commons-5.0.3-d63b307395f3f3c53df110cf27c3d8788b6577e5.jar" />
+    </item>
+    <item
+        jar="C:\Work\nativescript-hack\RUNTIME\app\build\intermediates\exploded-aar\com.android.support\support-v4\23.0.1\jars\libs\internal_impl-23.0.1.jar"
+        jumboMode="false"
+        revision="23.0.0"
+        sha1="aa92916125166649d8ad4ba3940c3dd7515596d3">
+        <dex dex="C:\Work\nativescript-hack\RUNTIME\app\build\intermediates\pre-dexed\arm7\debug\internal_impl-23.0.1-67249d830d768a56da075807ee0bb19a881eb474.jar" />
+    </item>
+
+</items>

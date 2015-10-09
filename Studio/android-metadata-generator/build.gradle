@@ -1,0 +1,35 @@
+//apply plugin: 'java'
+//
+//dependencies {
+//    compile fileTree(dir: 'libs', include: ['*.jar'])
+//}
+
+
+apply plugin: 'com.android.model.library'
+
+
+model {
+    android {
+        compileSdkVersion = 23
+        buildToolsVersion = "23.0.0"
+
+        defaultConfig.with {
+            //
+            //  NOTE: change the application ID to match the play console linked application.
+            //
+            applicationId = "com.tns"
+            minSdkVersion.apiLevel    = 9
+            targetSdkVersion.apiLevel = 23
+        }
+    }
+
+    compileOptions.with {
+        sourceCompatibility=JavaVersion.VERSION_1_7
+        targetCompatibility=JavaVersion.VERSION_1_7
+    }
+}
+
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+}

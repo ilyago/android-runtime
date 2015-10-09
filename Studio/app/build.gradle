@@ -1,0 +1,119 @@
+apply plugin: 'com.android.model.application'
+
+model {
+    android {
+        compileSdkVersion = 23
+        buildToolsVersion = "23.0.0"
+
+        defaultConfig.with {
+            //
+            //  NOTE: change the application ID to match the play console linked application.
+            //
+            applicationId = "com.tns"
+            minSdkVersion.apiLevel = 9
+            targetSdkVersion.apiLevel = 23
+        }
+
+//        sourceSets {
+//            main {
+//                //res.srcDirs = ['src/main/res']
+//                java.srcDirs = ['src/main']
+//            }
+//
+//            tests {
+//                //res.srcDirs = ['src/tests/res']
+//                java.srcDirs = ['src/main', 'src/tests']
+//            }
+//        }
+//
+//        sourceSets {
+//            main.java.srcDirs = ['src/main']
+
+//            tests {
+//                //res.srcDirs = ['src/tests/res']
+//                java.srcDirs = ['src/main', 'src/tests']
+//            }
+//        }
+    }
+
+//    android.sources {
+//        main {
+//            java {
+//                source {
+//                    srcDirs 'src/main'
+//                }
+//            }
+//        }
+//
+//        tests {
+//            java {
+//                source {
+//                    srcDirs 'src/tests'
+//                }
+//            }
+//        }
+//    }
+
+
+    compileOptions.with {
+        sourceCompatibility = JavaVersion.VERSION_1_7
+        targetCompatibility = JavaVersion.VERSION_1_7
+    }
+
+    android.lintOptions {
+        abortOnError = false
+    }
+
+    android.ndk {
+        moduleName = "NativeScript"
+        CFlags += "-g -DNDK_PROFILER_ENABLED -std=c++11"
+        cppFlags += "-I${file("src/main/jni")}".toString()
+        //cppFlags += "-I${gpg_sdk_path}/include".toString()
+        cppFlags += "-I${file("src/main/jni/include")}".toString()
+        cppFlags += "-std=c++11"
+        ldLibs += ["log", "android", "z"]
+        stl = "stlport_static"
+    }
+
+    android.buildTypes {
+        release {
+            //minifyEnabled = false
+            //proguardFiles  += file('proguard-rules.txt')
+        }
+    }
+    android.productFlavors {
+        create("arm7") {
+            ndk.abiFilters += "armeabi-v7a"
+            //ndk.ldFlags += "-L${gpg_sdk_path}/lib/c++/armeabi-v7a".toString()
+            //ndk.ldFlags += "-L${file("src/main/jni/libs/arm")}".toString()
+
+            ndk.ldFlags += "${file("src/main/jni/libs/arm/libv8_base.a")}".toString()
+            ndk.ldFlags += "${file("src/main/jni/libs/arm/libv8_libplatform.a")}".toString()
+            ndk.ldFlags += "${file("src/main/jni/libs/arm/libv8_libbase.a")}".toString()
+            ndk.ldFlags += "${file("src/main/jni/libs/arm/libv8_nosnapshot.a")}".toString()
+            ndk.ldFlags += "${file("src/main/jni/libs/arm/libzip.a")}".toString()
+        }
+
+        create("x86") {
+            ndk.abiFilters += "x86"
+            //ndk.ldFlags += "-L${gpg_sdk_path}/lib/c++/armeabi-v7a".toString()
+            //ndk.ldFlags += "-L${file("src/main/jni/libs/arm")}".toString()
+
+            ndk.ldFlags += "${file("src/main/jni/libs/x86/libv8_base.a")}".toString()
+            ndk.ldFlags += "${file("src/main/jni/libs/x86/libv8_libplatform.a")}".toString()
+            ndk.ldFlags += "${file("src/main/jni/libs/x86/libv8_libbase.a")}".toString()
+            ndk.ldFlags += "${file("src/main/jni/libs/x86/libv8_nosnapshot.a")}".toString()
+            ndk.ldFlags += "${file("src/main/jni/libs/x86/libzip.a")}".toString()
+        }
+    }
+}
+
+
+dependencies {
+    compile project(':binding-generator')
+    //compile project(':android-metadata-generator')
+    compile 'com.android.support:appcompat-v7:23.0.1'
+}
+
+
+
