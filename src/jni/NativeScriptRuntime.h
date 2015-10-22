@@ -33,7 +33,9 @@ namespace tns
 
 		static bool RegisterInstance(const v8::Local<v8::Object>& jsObject, const std::string& fullClassName, const ArgsWrapper& argWrapper, const v8::Local<v8::Object>& implementationObject, bool isInterface);
 
-		static jclass ResolveClass(const std::string& fullClassname, const v8::Local<v8::Object>& implementationObject);
+		static jclass ResolveClass(const std::string& fullClassname, const v8::Local<v8::Object>& implementationObject, const v8::Local<v8::Array>& annotations, const v8::Local<v8::Array>& exposedMethods);
+
+		static jclass TryGetResolvedClass(JEnv& env, const std::string& fullClassname);
 		//
 
 		static v8::Local<v8::Value> GetArrayElement(const v8::Local<v8::Object>& array, uint32_t index, const std::string& arraySignature);
@@ -80,6 +82,10 @@ namespace tns
 
 		static jobjectArray GetMethodOverrides(JEnv& env, const v8::Local<v8::Object>& implementationObject);
 
+		static jobjectArray GetExposedMethods(JEnv& env, const v8::Local<v8::Array>& exposedMethods);
+
+		static jobjectArray GetAnnotations(JEnv& env, const v8::Local<v8::Array>& annotations);
+
 		static std::string LogExceptionStackTrace(const v8::TryCatch& tryCatch);
 
 		static void EnableVerboseLoggingMethodCallback(const v8::FunctionCallbackInfo<v8::Value>& args);
@@ -116,6 +122,14 @@ namespace tns
 		static v8::Persistent<v8::Object>* MarkJsObject(const v8::Local<v8::Object>& object, std::string mark, const v8::Local<v8::Value>& value);
 
 		static JavaVM *jvm;
+
+		static jclass ANNOTATION_DESCRIPTOR_CLASS;
+
+		static jclass EXPOSED_METHOD_CLASS;
+
+		static jmethodID ANNOTATION_DESCRIPTOR_CTOR_ID;
+
+		static jmethodID EXPOSED_METHOD_CTOR_ID;
 
 		static jmethodID RESOLVE_CLASS_METHOD_ID;
 

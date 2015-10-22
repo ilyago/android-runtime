@@ -17,31 +17,6 @@ var __native = function(thiz) {
 		}
 	}
 	
-	//TODO: enable when harmony proxies are supported
-//	var deadEnd = function(target, name)
-//	{
-//	    throw new TypeError("Use of typescript instance is not supported when extending native objects. Did you forget ot use 'return native(this)' in your constructor ?");
-//	}
-//	
-//	var handler = {};
-//	handler.get =  deadEnd;
-//	handler.set = deadEnd;
-//	handler.has = deadEnd;
-//	handler.deleteProperty = deadEnd; 
-//	handler.apply = deadEnd;
-//	handler.construct = deadEnd;
-//	handler.getOwnPropertyDescriptor = deadEnd; 
-//	handler.defineProperty = deadEnd;
-//	handler.getPrototypeOf = deadEnd;
-//	handler.setPrototypeOf = deadEnd;
-//	handler.enumerate = deadEnd;
-//	handler.ownKeys = deadEnd;
-//	handler.preventExtensions = deadEnd; 
-//	handler.isExtensible = deadEnd;
-//	
-//	var deadProxy = new Proxy({}, handler);
-//	thiz.__proto__ = deadProxy;
-	
 	thiz.constructor = undefined;
 	thiz.__proto__ = undefined;
 	Object.freeze(thiz);
@@ -59,7 +34,12 @@ var __extends = function(Child, Parent) {
 		function extend(child, parent) {
 			__log("TS extend called");
 			if (!child.__extended) {
-	        	child.__extended = parent.extend(child.name, child.prototype);
+				var exposedMethods = [];
+				if (child.prototype.__exposedMethods) {
+					exposedMethods = child.prototype.__exposedMethods;
+					delete child.prototype.__exposedMethods;
+				}
+	        	child.__extended = parent.extend(child.name, child.prototype, { "annotations": [], "exposedMethods": exposedMethods });
 	        }
 	 
 	        return child.__extended;
@@ -106,4 +86,25 @@ var __extends = function(Child, Parent) {
 	}
 }
 
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") return Reflect.decorate(decorators, target, key, desc);
+    switch (arguments.length) {
+        case 2: return decorators.reduceRight(function(o, d) { return (d && d(o)) || o; }, target);
+        case 3: return decorators.reduceRight(function(o, d) { return (d && d(target, key)), void 0; }, void 0);
+        case 4: return decorators.reduceRight(function(o, d) { return (d && d(target, key, o)) || o; }, desc);
+    }
+};
+
+function ExposeWithSignature(sig, annotations) {
+    return function (target, key, value) {
+        if (!target.__exposedMethods) {
+            target.__exposedMethods = [];
+        }
+        target.__exposedMethods.push({ "signature": sig, "annotations": annotations });
+    };
+}
+
+
 global.__extends = __extends;
+global.__decorate = __decorate;
+global.ExposeWithSignature = ExposeWithSignature;

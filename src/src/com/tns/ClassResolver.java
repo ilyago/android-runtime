@@ -2,9 +2,12 @@ package com.tns;
 
 import java.io.IOException;
 
+import com.tns.bindings.AnnotationDescriptor;
+import com.tns.bindings.ExposedMethod;
+
 class ClassResolver
 {
-	public static Class<?> resolveClass(String fullClassName, DexFactory dexFactory, String[] methodOverrides) throws ClassNotFoundException, IOException
+	public static Class<?> resolveClass(String fullClassName, DexFactory dexFactory, String[] methodOverrides, AnnotationDescriptor[] annotations, ExposedMethod[] exposedMethods) throws ClassNotFoundException, IOException
 	{
 		String cannonicalClassName = fullClassName.replace('/', '.');
 		String name = null;
@@ -28,7 +31,7 @@ class ClassResolver
 				name = "0";
 			}
 
-			clazz = dexFactory.resolveClass(name, className, methodOverrides);
+			clazz = dexFactory.resolveClass(name, className, methodOverrides, annotations, exposedMethods);
 		}
 
 		if (clazz == null)

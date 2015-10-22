@@ -191,7 +191,7 @@ public class RuntimeTests extends AndroidTestCase
 	
 	public void test_When_generating_proxy_on_overloaded_method() throws Throwable
 	{
-		dump.generateProxy(aw, TargetObject.class, new String[] {"methodWithOverload"}, 0);
+		dump.generateProxy(aw, TargetObject.class, new String[] {"methodWithOverload"}, null, null, 0);
 		aw.visitEnd();
 		byte[] generatedBytes = aw.toByteArray();
 		
@@ -250,7 +250,7 @@ public class RuntimeTests extends AndroidTestCase
 	
 	public void test_When_generating_proxy_on_method_with_object_argument() throws Throwable
 	{
-		dump.generateProxy(aw, TargetObject.class);
+		dump.generateProxy(aw, TargetObject.class, null, null);
 		aw.visitEnd();
 		byte[] generatedBytes = aw.toByteArray();
 		
@@ -274,7 +274,7 @@ public class RuntimeTests extends AndroidTestCase
 	
 	public void test_When_generating_proxy_on_method_with_string_argument() throws Throwable
 	{
-		dump.generateProxy(aw, TargetObject.class);
+		dump.generateProxy(aw, TargetObject.class, null, null);
 		aw.visitEnd();
 		byte[] generatedBytes = aw.toByteArray();
 		
@@ -300,7 +300,7 @@ public class RuntimeTests extends AndroidTestCase
 	
 	public void test_When_generating_proxy_on_method_with_int_argument() throws Throwable
 	{
-		dump.generateProxy(aw, TargetObject.class);
+		dump.generateProxy(aw, TargetObject.class, null, null);
 		aw.visitEnd();
 		byte[] generatedBytes = aw.toByteArray();
 		
@@ -326,7 +326,7 @@ public class RuntimeTests extends AndroidTestCase
 	
 	public void test_When_generating_proxy_on_method_with_boolean_argument() throws Throwable
 	{
-		dump.generateProxy(aw, TargetObject.class);
+		dump.generateProxy(aw, TargetObject.class, null, null);
 		aw.visitEnd();
 		byte[] generatedBytes = aw.toByteArray();
 		
@@ -352,7 +352,7 @@ public class RuntimeTests extends AndroidTestCase
 	
 	public void test_When_generating_proxy_on_method_with_char_argument() throws Throwable
 	{
-		dump.generateProxy(aw, TargetObject.class);
+		dump.generateProxy(aw, TargetObject.class, null, null);
 		aw.visitEnd();
 		byte[] generatedBytes = aw.toByteArray();
 		
@@ -378,7 +378,7 @@ public class RuntimeTests extends AndroidTestCase
 	
 	public void test_When_generating_proxy_on_method_with_long_argument() throws Throwable
 	{
-		dump.generateProxy(aw, TargetObject.class);
+		dump.generateProxy(aw, TargetObject.class, null, null);
 		aw.visitEnd();
 		byte[] generatedBytes = aw.toByteArray();
 		
@@ -404,7 +404,7 @@ public class RuntimeTests extends AndroidTestCase
 	
 	public void test_When_generating_proxy_on_method_with_double_argument() throws Throwable
 	{
-		dump.generateProxy(aw, TargetObject.class);
+		dump.generateProxy(aw, TargetObject.class, null, null);
 		aw.visitEnd();
 		byte[] generatedBytes = aw.toByteArray();
 		
@@ -430,7 +430,7 @@ public class RuntimeTests extends AndroidTestCase
 	
 	public void test_When_generating_proxy_on_method_with_float_argument() throws Throwable
 	{
-		dump.generateProxy(aw, TargetObject.class);
+		dump.generateProxy(aw, TargetObject.class, null, null);
 		aw.visitEnd();
 		byte[] generatedBytes = aw.toByteArray();
 		
@@ -456,7 +456,7 @@ public class RuntimeTests extends AndroidTestCase
 	
 	public void test_When_generating_proxy_on_method_with_byte_argument() throws Throwable
 	{
-		dump.generateProxy(aw, TargetObject.class);
+		dump.generateProxy(aw, TargetObject.class, null, null);
 		aw.visitEnd();
 		byte[] generatedBytes = aw.toByteArray();
 		
@@ -482,7 +482,7 @@ public class RuntimeTests extends AndroidTestCase
 	
 	public void test_When_generating_proxy_on_method_with_byte_array_argument() throws Throwable
 	{
-		dump.generateProxy(aw, TargetObject.class);
+		dump.generateProxy(aw, TargetObject.class, null, null);
 		aw.visitEnd();
 		byte[] generatedBytes = aw.toByteArray();
 		
@@ -508,7 +508,7 @@ public class RuntimeTests extends AndroidTestCase
 	
 	public void test_When_generating_proxy_on_method_with_long_and_double_arguments() throws Throwable
 	{
-		dump.generateProxy(aw, TargetObject.class);
+		dump.generateProxy(aw, TargetObject.class, null, null);
 		aw.visitEnd();
 		byte[] generatedBytes = aw.toByteArray();
 		
@@ -548,7 +548,7 @@ public class RuntimeTests extends AndroidTestCase
 	
 	public void test_When_generating_proxy_on_method_returning_byte() throws Throwable
 	{
-		dump.generateProxy(aw, TargetObject.class);
+		dump.generateProxy(aw, TargetObject.class, null, null);
 		aw.visitEnd();
 		byte[] generatedBytes = aw.toByteArray();
 		
@@ -576,7 +576,7 @@ public class RuntimeTests extends AndroidTestCase
 	
 	public void test_When_generating_proxy_on_method_returning_char() throws Throwable
 	{
-		dump.generateProxy(aw, TargetObject.class);
+		dump.generateProxy(aw, TargetObject.class, null, null);
 		aw.visitEnd();
 		byte[] generatedBytes = aw.toByteArray();
 		
@@ -604,7 +604,7 @@ public class RuntimeTests extends AndroidTestCase
 	
 	public void test_When_generating_proxy_on_method_returning_short() throws Throwable
 	{
-		dump.generateProxy(aw, TargetObject.class);
+		dump.generateProxy(aw, TargetObject.class, null, null);
 		aw.visitEnd();
 		byte[] generatedBytes = aw.toByteArray();
 		
@@ -632,7 +632,7 @@ public class RuntimeTests extends AndroidTestCase
 	
 	public void test_When_generating_proxy_on_method_returning_int() throws Throwable
 	{
-		dump.generateProxy(aw, TargetObject.class);
+		dump.generateProxy(aw, TargetObject.class, null, null);
 		aw.visitEnd();
 		byte[] generatedBytes = aw.toByteArray();
 		
@@ -660,7 +660,7 @@ public class RuntimeTests extends AndroidTestCase
 	
 	public void test_When_generating_proxy_on_method_returning_float() throws Throwable
 	{
-		dump.generateProxy(aw, TargetObject.class);
+		dump.generateProxy(aw, TargetObject.class, null, null);
 		aw.visitEnd();
 		byte[] generatedBytes = aw.toByteArray();
 		
@@ -688,7 +688,7 @@ public class RuntimeTests extends AndroidTestCase
 	
 	public void test_When_generating_proxy_on_method_returning_double() throws Throwable
 	{
-		dump.generateProxy(aw, TargetObject.class);
+		dump.generateProxy(aw, TargetObject.class, null, null);
 		aw.visitEnd();
 		byte[] generatedBytes = aw.toByteArray();
 		
@@ -716,7 +716,7 @@ public class RuntimeTests extends AndroidTestCase
 	
 	public void test_When_generating_proxy_on_method_returning_long() throws Throwable
 	{
-		dump.generateProxy(aw, TargetObject.class);
+		dump.generateProxy(aw, TargetObject.class, null, null);
 		aw.visitEnd();
 		byte[] generatedBytes = aw.toByteArray();
 		
@@ -744,7 +744,7 @@ public class RuntimeTests extends AndroidTestCase
 	
 	public void test_When_generating_proxy_on_method_returning_String() throws Throwable
 	{
-		dump.generateProxy(aw, TargetObject.class);
+		dump.generateProxy(aw, TargetObject.class, null, null);
 		aw.visitEnd();
 		byte[] generatedBytes = aw.toByteArray();
 		
@@ -772,7 +772,7 @@ public class RuntimeTests extends AndroidTestCase
 	
 	public void test_When_generating_proxy_on_method_returning_Object() throws Throwable
 	{
-		dump.generateProxy(aw, TargetObject.class);
+		dump.generateProxy(aw, TargetObject.class, null, null);
 		aw.visitEnd();
 		byte[] generatedBytes = aw.toByteArray();
 		
@@ -801,7 +801,7 @@ public class RuntimeTests extends AndroidTestCase
 	
 	public void test_When_generating_proxy_on_an_interface() throws Throwable
 	{
-		dump.generateProxy(aw, TargetObject.TargetInterface.class);
+		dump.generateProxy(aw, TargetObject.TargetInterface.class, null, null);
 		aw.visitEnd();
 		byte[] generatedBytes = aw.toByteArray();
 		
@@ -835,7 +835,7 @@ public class RuntimeTests extends AndroidTestCase
 	
 	public void test_When_generating_proxy_on_an_button1_class() throws Throwable
 	{
-		dump.generateProxy(aw, com.proxy.Button1.class);
+		dump.generateProxy(aw, com.proxy.Button1.class, null, null);
 		aw.visitEnd();
 		byte[] generatedBytes = aw.toByteArray();
 		
@@ -862,7 +862,7 @@ public class RuntimeTests extends AndroidTestCase
 	
 	public void test_When_generating_proxy_on_an_android_widget_BaseAdapter_class() throws Throwable
 	{
-		dump.generateProxy(aw, android.widget.BaseAdapter.class);
+		dump.generateProxy(aw, android.widget.BaseAdapter.class, null, null);
 		aw.visitEnd();
 		byte[] generatedBytes = aw.toByteArray();
 		
@@ -909,7 +909,7 @@ public class RuntimeTests extends AndroidTestCase
 	
 	public void test_When_generating_proxy_on_method_with_all_types_of_args() throws Throwable
 	{
-		dump.generateProxy(aw, TargetObject.class);
+		dump.generateProxy(aw, TargetObject.class, null, null);
 		aw.visitEnd();
 		byte[] generatedBytes = aw.toByteArray();
 		
@@ -1045,7 +1045,7 @@ public class RuntimeTests extends AndroidTestCase
 			Dump dump = new Dump();
 			Class<?> classForName = Class.forName(clazz);
 			//Log.d("Binding.Gen.Test", "Generating Class " +  classForName.getName());
-			dump.generateProxy(aw, classForName, new String[0], 0);
+			dump.generateProxy(aw, classForName, new String[0], null, null, 0);
 			aw.visitEnd();
 			byte[] generatedBytes = aw.toByteArray();
 			File proxyFile = saveProxy(classForName.getName().replace('$', '_'), generatedBytes);
@@ -1169,7 +1169,7 @@ public class RuntimeTests extends AndroidTestCase
 			Dump dump = new Dump();
 			Class<?> classForName = Class.forName(classWithOverrides.getKey());
 			//Log.d("Binding.Gen.Test", "Generating Class " +  classForName.getName());
-			dump.generateProxy(aw, classForName, classWithOverrides.getValue(), 0);
+			dump.generateProxy(aw, classForName, classWithOverrides.getValue(), null, null, 0);
 			aw.visitEnd();
 			byte[] generatedBytes = aw.toByteArray();
 			File proxyFile = saveProxy(classForName.getName().replace('$', '_'), generatedBytes);
@@ -3116,7 +3116,7 @@ public class RuntimeTests extends AndroidTestCase
 			Dump dump = new Dump();
 			Class<?> classForName = Class.forName(clazz);
 			Log.d("Binding.Gen.Test", "Generating Class " +  classForName.getName());
-			dump.generateProxy(aw, classForName);
+			dump.generateProxy(aw, classForName, null, null);
 			aw.visitEnd();
 			byte[] generatedBytes = aw.toByteArray();
 		}

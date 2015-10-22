@@ -41,7 +41,19 @@ void NativeScriptRuntime::Init(JavaVM *jvm, ObjectManager *objectManager)
 	RequireClass = env.FindClass("com/tns/Require");
 	assert(RequireClass != nullptr);
 
-	RESOLVE_CLASS_METHOD_ID = env.GetStaticMethodID(PlatformClass, "resolveClass", "(Ljava/lang/String;[Ljava/lang/String;)Ljava/lang/Class;");
+	ANNOTATION_DESCRIPTOR_CLASS = env.FindClass("com/tns/bindings/AnnotationDescriptor");
+	assert(ANNOTATION_DESCRIPTOR_CLASS != nullptr);
+
+	EXPOSED_METHOD_CLASS = env.FindClass("com/tns/bindings/ExposedMethod");
+	assert(EXPOSED_METHOD_CLASS != nullptr);
+
+	ANNOTATION_DESCRIPTOR_CTOR_ID = env.GetMethodID(ANNOTATION_DESCRIPTOR_CLASS, "<init>", "(Ljava/lang/String;)V");
+	assert(ANNOTATION_DESCRIPTOR_CTOR_ID != nullptr);
+
+	EXPOSED_METHOD_CTOR_ID = env.GetMethodID(EXPOSED_METHOD_CLASS, "<init>", "(Ljava/lang/String;[Lcom/tns/bindings/AnnotationDescriptor;)V");
+	assert(EXPOSED_METHOD_CTOR_ID != nullptr);
+
+	RESOLVE_CLASS_METHOD_ID = env.GetStaticMethodID(PlatformClass, "resolveClass", "(Ljava/lang/String;[Ljava/lang/String;[Lcom/tns/bindings/AnnotationDescriptor;[Lcom/tns/bindings/ExposedMethod;)Ljava/lang/Class;");
 	assert(RESOLVE_CLASS_METHOD_ID != nullptr);
 
 	CREATE_INSTANCE_METHOD_ID = env.GetStaticMethodID(PlatformClass, "createInstance", "([Ljava/lang/Object;II)Ljava/lang/Object;");
@@ -89,7 +101,11 @@ bool NativeScriptRuntime::RegisterInstance(const Local<Object>& jsObject, const 
 
 	JEnv env;
 
-	jclass generatedJavaClass = ResolveClass(fullClassName, implementationObject);
+	auto isolate = argWrapper.args.GetIsolate();
+
+	jclass generatedJavaClass = TryGetResolvedClass(env, fullClassName);
+
+	assert(generatedJavaClass != nullptr);
 
 	int javaObjectID = objectManager->GenerateNewObjectID();
 
@@ -115,8 +131,8 @@ bool NativeScriptRuntime::RegisterInstance(const Local<Object>& jsObject, const 
 	return success;
 }
 
-jclass NativeScriptRuntime::ResolveClass(const std::string& fullClassname, const Local<Object>& implementationObject) {
-
+jclass NativeScriptRuntime::ResolveClass(const std::string& fullClassname, const Local<Object>& implementationObject, const Local<Array>& annotations, const Local<Array>& exposedMethods)
+{
 	auto itFound = s_classCache.find(fullClassname);
 
 	jclass globalRefToGeneratedClass;
@@ -134,11 +150,33 @@ jclass NativeScriptRuntime::ResolveClass(const std::string& fullClassname, const
 
 		jobjectArray methodOverrides = GetMethodOverrides(env, implementationObject);
 
+		JniLocalRef javaAnnotations(GetAnnotations(env, annotations));
+
+		JniLocalRef javaExposedMethods(GetExposedMethods(env, exposedMethods));
+
 		//create or load generated binding (java class)
-		JniLocalRef generatedClass(env.CallStaticObjectMethod(PlatformClass, RESOLVE_CLASS_METHOD_ID,  (jstring)javaFullClassName, methodOverrides));
+		JniLocalRef generatedClass(env.CallStaticObjectMethod(PlatformClass, RESOLVE_CLASS_METHOD_ID,  (jstring)javaFullClassName, methodOverrides, (jobjectArray)javaAnnotations, (jobjectArray)javaExposedMethods));
 		globalRefToGeneratedClass = reinterpret_cast<jclass>(env.NewGlobalRef(generatedClass));
 
 		s_classCache.insert(make_pair(fullClassname, globalRefToGeneratedClass));
+	}
+
+	return globalRefToGeneratedClass;
+}
+
+jclass NativeScriptRuntime::TryGetResolvedClass(JEnv& env, const string& fullClassname)
+{
+	jclass globalRefToGeneratedClass;
+
+	auto itFound = s_classCache.find(fullClassname);
+
+	if (itFound != s_classCache.end())
+	{
+		globalRefToGeneratedClass = itFound->second;
+	}
+	else
+	{
+		globalRefToGeneratedClass = env.FindClass(fullClassname);
 	}
 
 	return globalRefToGeneratedClass;
@@ -701,6 +739,63 @@ jobjectArray NativeScriptRuntime::GetMethodOverrides(JEnv& env, const Local<Obje
 	return methodOverrides;
 }
 
+jobjectArray NativeScriptRuntime::GetExposedMethods(JEnv& env, const Local<Array>& exposedMethods)
+{
+	jobjectArray arr = nullptr;
+
+	if (!exposedMethods.IsEmpty())
+	{
+		auto len = exposedMethods->Length();
+
+		arr = env.NewObjectArray(len, EXPOSED_METHOD_CLASS, nullptr);
+
+		auto sigPropName = ConvertToV8String("signature");
+
+		auto annotationPropName = ConvertToV8String("annotations");
+
+		for (auto i=0; i<len; i++)
+		{
+			auto em = exposedMethods->Get(i).As<Object>();
+
+			auto sig = ConvertToJavaString(em->Get(sigPropName));
+			auto annotations = GetAnnotations(env, em->Get(annotationPropName).As<Array>());
+
+			auto javaExposedMehtod = env.NewObject(EXPOSED_METHOD_CLASS, EXPOSED_METHOD_CTOR_ID, sig, annotations);
+
+			env.SetObjectArrayElement(arr, i, javaExposedMehtod);
+		}
+	}
+
+	return arr;
+}
+
+jobjectArray NativeScriptRuntime::GetAnnotations(JEnv& env, const Local<Array>& annotations)
+{
+	jobjectArray arr = nullptr;
+
+	if (!annotations.IsEmpty())
+	{
+		int len = annotations->Length();
+
+		arr = env.NewObjectArray(len, ANNOTATION_DESCRIPTOR_CLASS, nullptr);
+
+		auto nameProp = ConvertToV8String("className");
+
+		for (auto i=0; i<len; i++)
+		{
+			auto jsAnnotation = annotations->Get(i).As<Object>();
+
+			auto name = ConvertToJavaString(jsAnnotation->Get(nameProp));
+
+			auto javaAnnotation = env.NewObject(ANNOTATION_DESCRIPTOR_CLASS, ANNOTATION_DESCRIPTOR_CTOR_ID, name);
+
+			env.SetObjectArrayElement(arr, i, javaAnnotation);
+		}
+	}
+
+	return arr;
+}
+
 void NativeScriptRuntime::LogMethodCallback(const v8::FunctionCallbackInfo<v8::Value>& args)
 {
 	ASSERT_MESSAGE(args.Length() == 1, "Log should be called with string parameter");
@@ -1101,6 +1196,10 @@ JavaVM* NativeScriptRuntime::jvm = nullptr;
 jclass NativeScriptRuntime::PlatformClass = nullptr;
 jclass NativeScriptRuntime::RequireClass = nullptr;
 jclass NativeScriptRuntime::JAVA_LANG_STRING = nullptr;
+jclass NativeScriptRuntime::ANNOTATION_DESCRIPTOR_CLASS = nullptr;
+jclass NativeScriptRuntime::EXPOSED_METHOD_CLASS;
+jmethodID NativeScriptRuntime::ANNOTATION_DESCRIPTOR_CTOR_ID = nullptr;
+jmethodID NativeScriptRuntime::EXPOSED_METHOD_CTOR_ID = nullptr;
 jmethodID NativeScriptRuntime::RESOLVE_CLASS_METHOD_ID = nullptr;
 jmethodID NativeScriptRuntime::CREATE_INSTANCE_METHOD_ID = nullptr;
 jmethodID NativeScriptRuntime::CACHE_CONSTRUCTOR_METHOD_ID = nullptr;

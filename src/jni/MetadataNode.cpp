@@ -764,6 +764,9 @@ void MetadataNode::InterfaceConstructorCallback(const v8::FunctionCallbackInfo<v
 
 	string fullClassName = CreateFullClassName(className, extendNameAndLocation);
 
+	// we don't use 'extend' syntax for interfaces, so make sure to resolve the (cached) class
+	NativeScriptRuntime::ResolveClass(fullClassName, implementationObject, Local<Array>(), Local<Array>());
+
 	implementationObject->SetPrototype(thiz->GetPrototype());
 	thiz->SetPrototype(implementationObject);
 	thiz->SetHiddenValue(ConvertToV8String("t::implObj"), implementationObject);
@@ -989,11 +992,13 @@ void MetadataNode::PackageGetterCallback(Local<String> property, const PropertyC
 
 
 
-bool MetadataNode::ValidateExtendArguments(const FunctionCallbackInfo<Value>& info, string& extendLocation, v8::Local<v8::String>& extendName, Local<Object>& implementationObject)
+bool MetadataNode::ValidateExtendArguments(const FunctionCallbackInfo<Value>& info, string& extendLocation, v8::Local<v8::String>& extendName, Local<Object>& implementationObject, Local<Array>& annotations, Local<Array>& exposedMethods)
 {
 	bool extendLocationFound = GetExtendLocation(extendLocation);
 
-	if (info.Length() == 1)
+	int argsLen = info.Length();
+
+	if (argsLen == 1)
 	{
 		if (!extendLocationFound)
 		{
@@ -1018,7 +1023,7 @@ bool MetadataNode::ValidateExtendArguments(const FunctionCallbackInfo<Value>& in
 
 		implementationObject = info[0]->ToObject();
 	}
-	else if (info.Length() == 2)
+	else if ((argsLen == 2) || (argsLen == 3))
 	{
 		if (!info[0]->IsString())
 		{
@@ -1053,6 +1058,13 @@ bool MetadataNode::ValidateExtendArguments(const FunctionCallbackInfo<Value>& in
 			return false;
 		}
 		implementationObject = info[1]->ToObject();
+
+		if (argsLen == 3)
+		{
+			auto arg3 = info[2].As<Object>();
+			annotations = arg3->Get(ConvertToV8String("annotations")).As<Array>();
+			exposedMethods = arg3->Get(ConvertToV8String("exposedMethods")).As<Array>();
+		}
 	}
 	else
 	{
@@ -1104,10 +1116,13 @@ void MetadataNode::ExtendCallMethodHandler(const v8::FunctionCallbackInfo<v8::Va
 
 	SET_PROFILER_FRAME();
 
+	auto isolate = info.GetIsolate();
 	Local<Object> implementationObject;
 	Local<String> extendName;
+	Local<Array> annotations;
+	Local<Array> exposedMethods;
 	string extendLocation;
-	auto validArgs = ValidateExtendArguments(info, extendLocation, extendName, implementationObject);
+	auto validArgs = ValidateExtendArguments(info, extendLocation, extendName, implementationObject, annotations, exposedMethods);
 
 	if (!validArgs)
 		return;
@@ -1119,17 +1134,15 @@ void MetadataNode::ExtendCallMethodHandler(const v8::FunctionCallbackInfo<v8::Va
 	string extendNameAndLocation = extendLocation + ConvertToString(extendName);
 	auto fullClassName = TNS_PREFIX + CreateFullClassName(node->m_name, extendNameAndLocation);
 
-
 	//
 	//resolve class (pre-generated or generated runtime from dex generator)
-	jclass resolvedClass = NativeScriptRuntime::ResolveClass(fullClassName, implementationObject); //resolve class returns GlobalRef
+	jclass resolvedClass = NativeScriptRuntime::ResolveClass(fullClassName, implementationObject, annotations, exposedMethods); //resolve class returns GlobalRef
 	std::string generatedFullClassName = s_objectManager->GetClassName(resolvedClass);
 	//
 
 	auto fullExtendedName = generatedFullClassName;
 	DEBUG_WRITE("ExtendsCallMethodHandler: extend full name %s", fullClassName.c_str());
 
-	auto isolate = info.GetIsolate();
 	auto cachedData = GetCachedExtendedClassData(isolate, fullExtendedName);
 	if (cachedData.extendedCtorFunction != nullptr)
 	{
@@ -1340,7 +1353,6 @@ void MetadataNode::InjectPrototype(Local<Object>& target, Local<Object>& impleme
 	implementationObject->SetPrototype(target->GetPrototype());
 	target->SetPrototype(implementationObject);
 }
-
 
 string MetadataNode::TNS_PREFIX = "com/tns/gen/";
 std::map<std::string, MetadataNode*> MetadataNode::s_name2NodeCache;

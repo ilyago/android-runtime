@@ -15,6 +15,8 @@ import java.util.HashSet;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import com.tns.bindings.AnnotationDescriptor;
+import com.tns.bindings.ExposedMethod;
 import com.tns.bindings.ProxyGenerator;
 
 import dalvik.system.DexClassLoader;
@@ -62,7 +64,7 @@ public class DexFactory
 	static long totalMultiDexTime = 0;
 	static long totalLoadDexTime = 0;
 
-	public Class<?> resolveClass(String name, String className, String[] methodOverrides) throws ClassNotFoundException, IOException
+	public Class<?> resolveClass(String name, String className, String[] methodOverrides, AnnotationDescriptor[] annotations, ExposedMethod[] exposedMethods) throws ClassNotFoundException, IOException
 	{
 		if (className.contains("NativeScriptActivity"))
 		{
@@ -102,7 +104,7 @@ public class DexFactory
 				logger.write("generating proxy in place");
 			}
 
-			dexFilePath = this.generateDex(name, classToProxy, methodOverrides);
+			dexFilePath = this.generateDex(name, classToProxy, methodOverrides, annotations, exposedMethods);
 			dexFile = new File(dexFilePath);
 			long stopGenTime = System.nanoTime();
 			totalGenTime += stopGenTime - startGenTime;
@@ -239,7 +241,7 @@ public class DexFactory
 		return null;
 	}
 
-	private String generateDex(String proxyName, String className, String[] methodOverrides) throws ClassNotFoundException, IOException
+	private String generateDex(String proxyName, String className, String[] methodOverrides, AnnotationDescriptor[] annotations, ExposedMethod[] exposedMethods) throws ClassNotFoundException, IOException
 	{
 		Class<?> classToProxy = Class.forName(className);
 
@@ -253,8 +255,8 @@ public class DexFactory
 				methodOverridesSet.add(methodOverride);
 			}
 		}
-
-		return proxyGenerator.generateProxy(proxyName, classToProxy, methodOverridesSet);
+		
+		return proxyGenerator.generateProxy(proxyName, classToProxy, methodOverridesSet, annotations, exposedMethods);
 	}
 
 	private void updateDexThumbAndPurgeCache()

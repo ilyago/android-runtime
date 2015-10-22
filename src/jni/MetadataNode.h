@@ -197,13 +197,12 @@ namespace tns
 		v8::Local<v8::Function> SetMembersFromRuntimeMetadata(v8::Isolate *isolate, v8::Local<v8::FunctionTemplate>& ctorFuncTemplate, v8::Local<v8::ObjectTemplate>& prototypeTemplate, std::vector<MethodCallbackData*>& instanceMethodsCallbackData, const std::vector<MethodCallbackData*>& baseInstanceMethodsCallbackData, MetadataTreeNode *treeNode);
 		void SetInnnerTypes(v8::Isolate *isolate, v8::Local<v8::Function>& ctorFunction, MetadataTreeNode *treeNode);
 
-
 		static std::string CreateFullClassName(const std::string& className, const std::string& extendNameAndLocation);
 		static void MethodCallback(const v8::FunctionCallbackInfo<v8::Value>& info);
 		static void InterfaceConstructorCallback(const v8::FunctionCallbackInfo<v8::Value>& info);
 		static void ClassConstructorCallback(const v8::FunctionCallbackInfo<v8::Value>& info);
 		static void ExtendCallMethodHandler(const v8::FunctionCallbackInfo<v8::Value>& info);
-		static bool ValidateExtendArguments(const v8::FunctionCallbackInfo<v8::Value>& info, std::string& extendLocation, v8::Local<v8::String>& extendName, v8::Local<v8::Object>& implementationObject);
+		static bool ValidateExtendArguments(const v8::FunctionCallbackInfo<v8::Value>& info, std::string& extendLocation, v8::Local<v8::String>& extendName, v8::Local<v8::Object>& implementationObject, v8::Local<v8::Array>& annotations, v8::Local<v8::Array>& exposedMethods);
 		static void ExtendedClassConstructorCallback(const v8::FunctionCallbackInfo<v8::Value>& info);
 
 		static void InnerClassConstructorCallback(const v8::FunctionCallbackInfo<v8::Value>& info);

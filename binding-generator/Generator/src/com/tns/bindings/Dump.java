@@ -36,7 +36,7 @@ public class Dump
 	 *            a {@link Method Method} object.
 	 * @return the descriptor of the given method.
 	 */
-	 public String getDexMethodDescriptor(final Method method) 
+	 public String getDexMethodDescriptor(final MethodDescriptor method) 
 	 {
         Class<?>[] parameters = method.getParameterTypes();
         methodDescriptorBuilder.setLength(0);
@@ -55,7 +55,7 @@ public class Dump
 	 *            a {@link Method Method} object.
 	 * @return the descriptor of the given method.
 	 */
-	 public String getMethodOverloadDescriptor(final Method method) 
+	 public String getMethodOverloadDescriptor(final MethodDescriptor method) 
 	 {
         Class<?>[] parameters = method.getParameterTypes();
         methodDescriptorBuilder.setLength(0);
@@ -316,7 +316,7 @@ public class Dump
 		return buf.toString();
 	}
     
-    public void generateProxy(ApplicationWriter aw, String proxyName, Class<?> classTo, String[] methodOverrides, int ignored)
+    public void generateProxy(ApplicationWriter aw, String proxyName, Class<?> classTo, String[] methodOverrides, AnnotationDescriptor[] annotations, ExposedMethod[] exposedMethods, int ignored)
     {
     	HashSet<String> methodOverridesSet = new HashSet<String>();
 		for (int i = 0; i < methodOverrides.length; i++)
@@ -324,10 +324,10 @@ public class Dump
 			String methodOverride = methodOverrides[i];
 			methodOverridesSet.add(methodOverride);
 		}
-    	generateProxy(aw, proxyName, classTo, methodOverridesSet);
+    	generateProxy(aw, proxyName, classTo, methodOverridesSet, annotations, exposedMethods);
     }
     
-    public void generateProxy(ApplicationWriter aw, Class<?> classTo, String[] methodOverrides, int ignored)
+    public void generateProxy(ApplicationWriter aw, Class<?> classTo, String[] methodOverrides, AnnotationDescriptor[] annotations, ExposedMethod[] exposedMethods, int ignored)
     {
     	HashSet<String> methodOverridesSet = new HashSet<String>();
 		for (int i = 0; i < methodOverrides.length; i++)
@@ -335,20 +335,20 @@ public class Dump
 			String methodOverride = methodOverrides[i];
 			methodOverridesSet.add(methodOverride);
 		}
-    	generateProxy(aw, "0", classTo, methodOverridesSet);
+    	generateProxy(aw, "0", classTo, methodOverridesSet, annotations, exposedMethods);
     }
     
-    public void generateProxy(ApplicationWriter aw, String proxyName, Class<?> classTo)
+    public void generateProxy(ApplicationWriter aw, String proxyName, Class<?> classTo, AnnotationDescriptor[] annotations, ExposedMethod[] exposedMethods)
 	{
-    	generateProxy(aw, proxyName, classTo, null);
+    	generateProxy(aw, proxyName, classTo, null, annotations, exposedMethods);
 	}
     
-    public void generateProxy(ApplicationWriter aw, Class<?> classTo)
+    public void generateProxy(ApplicationWriter aw, Class<?> classTo, AnnotationDescriptor[] annotations, ExposedMethod[] exposedMethods)
    	{
-       	generateProxy(aw, "0", classTo, null);
+       	generateProxy(aw, "0", classTo, null, annotations, exposedMethods);
    	}
     
-    public void generateProxy(ApplicationWriter aw, String proxyName, Class<?> classTo, HashSet<String> methodOverrides)
+    public void generateProxy(ApplicationWriter aw, String proxyName, Class<?> classTo, HashSet<String> methodOverrides, AnnotationDescriptor[] annotations, ExposedMethod[] exposedMethods)
 	{
 		String classSignature = getAsmDescriptor(classTo);
 		//String methodSignature = org.objectweb.asm.Type.getMethodDescriptor(Object.class.getMethods()[0]);
@@ -356,8 +356,8 @@ public class Dump
 				classSignature.substring(1, classSignature.length() - 1).replace("$", "_")
 				+ CLASS_NAME_LOCATION_SEPARATOR + proxyName + ";";
 		
-		ClassVisitor cv = generateClass(aw, classTo, classSignature, tnsClassSignature);
-		Method[] methods = getSupportedMethods(classTo, methodOverrides);
+		ClassVisitor cv = generateClass(aw, classTo, classSignature, tnsClassSignature, annotations);
+		MethodDescriptor[] methods = getSupportedMethods(classTo, methodOverrides, exposedMethods);
 		
 		methods = groupMethodsByName(methods);
 		
@@ -372,12 +372,12 @@ public class Dump
 		cv.visitEnd();
 	}
 	
-	private Method[] groupMethodsByName(Method[] methods)
+	private MethodDescriptor[] groupMethodsByName(MethodDescriptor[] methods)
 	{
-		HashMap<String, Method> result = new HashMap<String, Method>();
+		HashMap<String, MethodDescriptor> result = new HashMap<String, MethodDescriptor>();
 		for (int i = 0; i < methods.length; i++)
 		{
-			Method method = methods[i];
+			MethodDescriptor method = methods[i];
 			String methodName = method.getName();
 			String methodOverLoadDescriptor = getMethodOverloadDescriptor(method);
 			methodName +=  "_" + methodOverLoadDescriptor;
@@ -387,23 +387,23 @@ public class Dump
 			}
 		}
 		
-		return result.values().toArray(new Method[result.size()]);
+		return result.values().toArray(new MethodDescriptor[result.size()]);
 	}
 
-	private Method[] getSupportedMethods(Class<?> clazz, HashSet<String> methodOverrides)
+	private MethodDescriptor[] getSupportedMethods(Class<?> clazz, HashSet<String> methodOverrides, ExposedMethod[] exposedMethods)
 	{
-		ArrayList<Method> result = new ArrayList<Method>();
-		HashMap<String, Method> finalMethods = new HashMap<String, Method>();
+		ArrayList<MethodDescriptor> result = new ArrayList<MethodDescriptor>();
+		HashMap<String, MethodDescriptor> finalMethods = new HashMap<String, MethodDescriptor>();
 		ArrayList<Class<?>> implementedInterfaces = new ArrayList<Class<?>>();
 		while (clazz != null)
 		{
-			Method[] methods = clazz.getDeclaredMethods();
+			MethodDescriptor[] methods = getDeclaredMethods(clazz);
 			
-			ArrayList<Method> methodz = new ArrayList<Method>();
+			ArrayList<MethodDescriptor> methodz = new ArrayList<MethodDescriptor>();
 			
 			for (int i = 0; i < methods.length; i++)
 			{
-				Method candidateMethod = methods[i];
+				MethodDescriptor candidateMethod = methods[i];
 				if (methodOverrides != null && !methodOverrides.contains(candidateMethod.getName()))
 				{
 					continue;
@@ -421,7 +421,7 @@ public class Dump
 			
 			for (int i = 0; i < methodz.size(); i++)
 			{
-				Method method = methodz.get(i);
+				MethodDescriptor method = methodz.get(i);
 				
 				if (isMethodSupported(method, finalMethods))
 				{
@@ -435,10 +435,10 @@ public class Dump
 		for (int i = 0; i < implementedInterfaces.size(); i++)
 		{
 			Class<?> implementedInterface = implementedInterfaces.get(i);
-			Method[] interfaceMethods = implementedInterface.getMethods();
+			MethodDescriptor[] interfaceMethods = getInterfaceMethods(implementedInterface);
 			for (int j = 0; j < interfaceMethods.length; j++)
 			{
-				Method method = interfaceMethods[j];
+				MethodDescriptor method = interfaceMethods[j];
 				
 				if (methodOverrides != null && !methodOverrides.contains(method.getName()))
 				{
@@ -452,13 +452,45 @@ public class Dump
 			}
 		}
 		
-		return result.toArray(new Method[result.size()]);
+		if ((exposedMethods != null) && (exposedMethods.length > 0))
+		{
+			for (ExposedMethod m: exposedMethods)
+			{
+				result.add(m);
+			}
+		}
+		
+		return result.toArray(new MethodDescriptor[result.size()]);
 
 		//For debugging
 		//return new Method[] { result.get(0) };
 	}
 	
-	private static boolean isMethodSupported(Method method, HashMap<String, Method> finalMethods)
+	private MethodDescriptor[] getInterfaceMethods(Class<?> iface)
+	{
+		Method[] methods = iface.getMethods();
+		MethodDescriptor[] result = new MethodDescriptor[methods.length];
+		int count = 0;
+		for (Method m: methods)
+		{
+			result[count++] = new ReflectedMethod(m);
+		}
+		return result;
+	}
+	
+	private MethodDescriptor[] getDeclaredMethods(Class<?> clazz)
+	{
+		Method[] declMethods = clazz.getDeclaredMethods();
+		MethodDescriptor[] result = new MethodDescriptor[declMethods.length];
+		int count = 0;
+		for (Method m: declMethods)
+		{
+			result[count++] = new ReflectedMethod(m);
+		}
+		return result;
+	}
+	
+	private static boolean isMethodSupported(MethodDescriptor method, HashMap<String, MethodDescriptor> finalMethods)
 	{
 		int modifiers = method.getModifiers();
 		if (method.isSynthetic() || Modifier.isStatic(modifiers) || Modifier.isPrivate(modifiers))
@@ -499,11 +531,11 @@ public class Dump
 		return true;
 	}
 	
-	private static boolean isMethodMarkedAsFinalInClassHierarchy(Method method, HashMap<String, Method> finalMethods)
+	private static boolean isMethodMarkedAsFinalInClassHierarchy(MethodDescriptor method, HashMap<String, MethodDescriptor> finalMethods)
 	{
 		if (finalMethods.size() != 0)
 		{
-			Method finalMethod = finalMethods.get(method.getName());
+			MethodDescriptor finalMethod = finalMethods.get(method.getName());
 			if (finalMethod != null)
 			{
 				boolean isSameFinalMethod = areMethodSignaturesEqual(finalMethod, method);
@@ -517,7 +549,7 @@ public class Dump
 		return false;
 	}
 	
-	private static boolean areMethodSignaturesEqual(Method x, Method y)
+	private static boolean areMethodSignaturesEqual(MethodDescriptor x, MethodDescriptor y)
 	{
 		if (x.equals(y))
 			return true;
@@ -632,7 +664,7 @@ public class Dump
 		mv.visitLabel(label);
 	}
 	
-	private void generateMethods(ClassVisitor cv, Class<?> classTo, Method[] methods, String classSignature, String tnsClassSignature)
+	private void generateMethods(ClassVisitor cv, Class<?> classTo, MethodDescriptor[] methods, String classSignature, String tnsClassSignature)
 	{
 		//for (Method method : methods)
 		int fieldNameCounter = 0;
@@ -645,7 +677,7 @@ public class Dump
 				fieldNameCounter++;
 			}
 			
-			Method sourceMethod = methods[i];
+			MethodDescriptor sourceMethod = methods[i];
 			
 			generateMethod(cv, classTo, sourceMethod, i, classSignature, tnsClassSignature, bitCounter);
 			
@@ -678,7 +710,7 @@ public class Dump
 		mv.visitEnd(); 
 	}
 
-	private void generateMethod(ClassVisitor cv, Class<?> classTo, Method method, int methodNumber, String classSignature, String tnsClassSignature, int fieldBit)
+	private void generateMethod(ClassVisitor cv, Class<?> classTo, MethodDescriptor method, int methodNumber, String classSignature, String tnsClassSignature, int fieldBit)
 	{
 		if (ProxyGenerator.IsLogEnabled) Log.d("TNS.Rungime.Proxy.Generator", "generatingMethod " + method.getName());
 		
@@ -691,6 +723,15 @@ public class Dump
 		int methodModifiers = getDexModifiers(method.getModifiers());
 
 		mv = cv.visitMethod(methodModifiers, method.getName(), methodDexSignature, null, exceptions);
+		AnnotationDescriptor[] annotations = method.getAnnotations();
+		if ((annotations != null) && (annotations.length > 0))
+		{
+			for (AnnotationDescriptor ad: annotations)
+			{
+				AnnotationVisitor av = mv.visitAnnotation(ad.getAnnotationClassname(), ad.isRuntimeVisible());
+				av.visitEnd();
+			}
+		}
 		mv.visitCode();
 		
 		int thisRegister = generateMaxStackSize(mv, method);
@@ -704,7 +745,7 @@ public class Dump
 		mv.visitEnd();
 	}
 
-	private int generateMaxStackSize(MethodVisitor mv, Method method)
+	private int generateMaxStackSize(MethodVisitor mv, MethodDescriptor method)
 	{
 		//3 local vars are enough for NativeScript bindings methods. Local vars start from 0 register till register 2. 
 		//Then 'this' is register 3 and then all parameters according to their size
@@ -772,7 +813,7 @@ public class Dump
 		return thisRegister;
 	}
 
-	private void generateCallOverrideBlock(MethodVisitor mv, Method method, int thisRegister, String classSignature, String tnsClassSignature, String methodDexSignature, int fieldBit)
+	private void generateCallOverrideBlock(MethodVisitor mv, MethodDescriptor method, int thisRegister, String classSignature, String tnsClassSignature, String methodDexSignature, int fieldBit)
 	{
 		//call the override
 		int argCount = generateArrayForCallJsArguments(mv, method.getParameterTypes() , thisRegister, classSignature, tnsClassSignature);
@@ -1126,7 +1167,7 @@ public class Dump
 
 	static final String[] classImplentedInterfaces = new String[] { "Lcom/tns/NativeScriptHashCodeProvider;" };
 	static final String[] interfaceImplementedInterfaces = new String[] { "Lcom/tns/NativeScriptHashCodeProvider;", "" };
-	private ClassVisitor generateClass(ApplicationWriter aw, Class<?> classTo, String classSignature, String tnsClassSignature)
+	private ClassVisitor generateClass(ApplicationWriter aw, Class<?> classTo, String classSignature, String tnsClassSignature, AnnotationDescriptor[] annotations)
 	{
 		ClassVisitor cv;
 		
@@ -1145,8 +1186,32 @@ public class Dump
 		
 		cv = aw.visitClass(classModifiers, tnsClassSignature, null, classSignature, implentedInterfaces);
 		cv.visit(0, classModifiers, tnsClassSignature, null, classSignature, implentedInterfaces);
+		if ((annotations !=  null) && (annotations.length > 0))
+		{
+			for (AnnotationDescriptor ad: annotations)
+			{
+				String annotationClassname = ad.getAnnotationClassname();
+				boolean isVisible = ad.isRuntimeVisible();
+				AnnotationVisitor av = cv.visitAnnotation(annotationClassname, isVisible);
+				setAnnotationFields(av, ad);
+				av.visitEnd();
+			}
+		}
 		cv.visitSource(classTo.getName() +  ".java", null);
 		return cv;
+	}
+	
+	private void setAnnotationFields(AnnotationVisitor av, AnnotationDescriptor ad)
+	{
+		AnnotationDescriptor.Parameter[] params = ad.getParams();
+		
+		if (params.length > 0)
+		{
+			for (AnnotationDescriptor.Parameter p: params)
+			{
+				av.visit(p.getName(), p.getValue());
+			}
+		}
 	}
 
 	private int getDexModifiers(int modifiers)

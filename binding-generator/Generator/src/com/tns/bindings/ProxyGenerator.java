@@ -29,7 +29,7 @@ public class ProxyGenerator
 	}
 	
 	
-	public String generateProxy(String proxyName, Class<?> classToProxy, String[] methodOverrides) throws IOException
+	public String generateProxy(String proxyName, Class<?> classToProxy, String[] methodOverrides, AnnotationDescriptor[] annotations, ExposedMethod[] exposedMethods) throws IOException
 	{
 		HashSet<String> methodOverridesSet = null;
 	
@@ -42,14 +42,14 @@ public class ProxyGenerator
 				methodOverridesSet.add(methodOverride);
 			}
 		}
-		return generateProxy(proxyName, classToProxy, methodOverridesSet);
+		return generateProxy(proxyName, classToProxy, methodOverridesSet, annotations, exposedMethods);
 	}
 	
-	public String generateProxy(String proxyName, Class<?> classToProxy, HashSet<String> methodOverrides) throws IOException
+	public String generateProxy(String proxyName, Class<?> classToProxy, HashSet<String> methodOverrides, AnnotationDescriptor[] annotations, ExposedMethod[] exposedMethods) throws IOException
 	{
 		ApplicationWriter aw = new ApplicationWriter();
 		aw.visit();
-		dump.generateProxy(aw, proxyName, classToProxy, methodOverrides);
+		dump.generateProxy(aw, proxyName, classToProxy, methodOverrides, annotations, exposedMethods);
 		aw.visitEnd();
 		byte[] generatedBytes = aw.toByteArray();
 		

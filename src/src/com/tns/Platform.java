@@ -3,6 +3,7 @@ package com.tns;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -20,6 +21,8 @@ import org.json.JSONObject;
 
 import android.util.SparseArray;
 
+import com.tns.bindings.AnnotationDescriptor;
+import com.tns.bindings.ExposedMethod;
 import com.tns.bindings.ProxyGenerator;
 import com.tns.internal.ExtractPolicy;
 
@@ -225,8 +228,9 @@ public class Platform
 	}
 	
 	@RuntimeCallable
-	private static Class<?> resolveClass(String fullClassName, String[] methodOverrides) throws ClassNotFoundException, IOException{
-		Class<?> javaClass = ClassResolver.resolveClass(fullClassName, dexFactory, methodOverrides);
+	private static Class<?> resolveClass(String fullClassName, String[] methodOverrides, AnnotationDescriptor[] annotations, ExposedMethod[] exposedMethods) throws ClassNotFoundException, IOException
+	{
+		Class<?> javaClass = ClassResolver.resolveClass(fullClassName, dexFactory, methodOverrides, annotations, exposedMethods);
 		
 		return javaClass;
 	}
