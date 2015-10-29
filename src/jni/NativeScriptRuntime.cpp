@@ -765,13 +765,17 @@ void NativeScriptRuntime::CreateGlobalCastFunctions(const Local<ObjectTemplate>&
 }
 
 
-void NativeScriptRuntime::CompileAndRun(string modulePath, bool& hasError, Local<Object>& moduleObj)
+void NativeScriptRuntime::CompileAndRun(string modulePath, bool& hasError, Local<Object>& moduleObj, string ambientName)
 {
 	auto isolate = Isolate::GetCurrent();
 
 	Local<Value> exportObj = Object::New(isolate);
 	auto tmpExportObj = new Persistent<Object>(isolate, exportObj.As<Object>());
 	loadedModules.insert(make_pair(modulePath, tmpExportObj));
+
+	if (!ambientName.empty()) {
+		ambientModulesCache.insert(make_pair(ambientName, tmpExportObj));
+	}
 
 	TryCatch tc;
 
@@ -856,45 +860,62 @@ void NativeScriptRuntime::RequireCallback(const v8::FunctionCallbackInfo<v8::Val
 	string moduleName = ConvertToString(args[0].As<String>());
 	string callingModuleDirName = ConvertToString(args[1].As<String>());
 
-	JEnv env;
-	JniLocalRef jsModulename(env.NewStringUTF(moduleName.c_str()));
-	JniLocalRef jsCallingModuleDirName(env.NewStringUTF(callingModuleDirName.c_str()));
-	JniLocalRef jsModulePath(env.CallStaticObjectMethod(RequireClass, GET_MODULE_PATH_METHOD_ID, (jstring) jsModulename, (jstring) jsCallingModuleDirName));
-
-	auto isolate = Isolate::GetCurrent();
-
-	// cache the required modules by full path, not name only, since there might be some collisions with relative paths and names
-	string modulePath = ArgConverter::jstringToString((jstring) jsModulePath);
-	if(modulePath == ""){
-		// module not found
-		stringstream ss;
-		ss << "Module \"" << moduleName << "\" not found";
-		string exception = ss.str();
-		ExceptionUtil::GetInstance()->ThrowExceptionToJs(exception);
-		return;
-	}
-	if (modulePath == "EXTERNAL_FILE_ERROR")
-	{
-		// module not found
-		stringstream ss;
-		ss << "Module \"" << moduleName << "\" is located on the external storage. Modules can be private application files ONLY";
-		string exception = ss.str();
-		ExceptionUtil::GetInstance()->ThrowExceptionToJs(exception);
-		return;
-	}
-
-	auto it = loadedModules.find(modulePath);
-
 	Local<Object> moduleObj;
 	bool hasError = false;
+	auto isolate = Isolate::GetCurrent();
 
-	if (it == loadedModules.end())
+	auto ambient = ambientModulesCache.find(moduleName);
+	if (ambient == ambientModulesCache.end())
 	{
-		CompileAndRun(modulePath, hasError, moduleObj);
+        JEnv env;
+		JniLocalRef jsModulename(env.NewStringUTF(moduleName.c_str()));
+		JniLocalRef jsCallingModuleDirName(env.NewStringUTF(callingModuleDirName.c_str()));
+		JniLocalRef jsModulePath(env.CallStaticObjectMethod(RequireClass, GET_MODULE_PATH_METHOD_ID, (jstring) jsModulename, (jstring) jsCallingModuleDirName));
+
+		// cache the required modules by full path, not name only, since there might be some collisions with relative paths and names
+		string modulePath = ArgConverter::jstringToString((jstring) jsModulePath);
+		if(modulePath == ""){
+			// module not found
+			stringstream ss;
+			ss << "Module \"" << moduleName << "\" not found";
+			string exception = ss.str();
+			ExceptionUtil::GetInstance()->ThrowExceptionToJs(exception);
+			return;
+		}
+		if (modulePath == "EXTERNAL_FILE_ERROR")
+		{
+			// module not found
+			stringstream ss;
+			ss << "Module \"" << moduleName << "\" is located on the external storage. Modules can be private application files ONLY";
+			string exception = ss.str();
+			ExceptionUtil::GetInstance()->ThrowExceptionToJs(exception);
+			return;
+		}
+		
+		auto it = loadedModules.find(modulePath);
+
+		if (it == loadedModules.end())
+		{
+			char c = moduleName.at(0);
+			// Naive is-ambient check
+			if (c != '.' && c != '/' && c != '\\' && c != '~') {
+				CompileAndRun(modulePath, hasError, moduleObj, moduleName);
+			}
+			else
+			{
+				CompileAndRun(modulePath, hasError, moduleObj, "");
+			}
+		}
+		else
+		{
+			// Found the module in cache by absolute path
+			moduleObj = Local<Object>::New(isolate, *((*it).second));
+		}
 	}
 	else
 	{
-		moduleObj = Local<Object>::New(isolate, *((*it).second));
+		// Found the module in the ambient modules cache
+		moduleObj = Local<Object>::New(isolate, *((*ambient).second));
 	}
 
 	if(!hasError){
@@ -1111,6 +1132,7 @@ jmethodID NativeScriptRuntime::ENABLE_VERBOSE_LOGGING_METHOD_ID = nullptr;
 jmethodID NativeScriptRuntime::DISABLE_VERBOSE_LOGGING_METHOD_ID = nullptr;
 jmethodID NativeScriptRuntime::GET_CHANGE_IN_BYTES_OF_USED_MEMORY_METHOD_ID = nullptr;
 map<string, Persistent<Object>*> NativeScriptRuntime::loadedModules;
+map<string, Persistent<Object>*> NativeScriptRuntime::ambientModulesCache;
 MetadataTreeNode* NativeScriptRuntime::metadataRoot = nullptr;
 ObjectManager* NativeScriptRuntime::objectManager = nullptr;
 NumericCasts NativeScriptRuntime::castFunctions;
