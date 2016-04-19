@@ -2,6 +2,8 @@
 	"main": "boot.js",
 	"android": {
 		"v8Flags": "--expose_gc",
-		"profilerOutputDir": "/sdcard"
+		"profilerOutputDir": "/sdcard",
+		"heapSnapshot": "true",
+		"heapSnapshotScript": "snapshot.js"
 	}
 }

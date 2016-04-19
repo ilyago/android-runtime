@@ -1,3 +1,5 @@
+android.util.Log.v("SNAPSHOT", "myFunction " + global.myFunction());
+
 global.__onUncaughtError = function(error){
 	if(error.nativeException){
 		__log("err.message: " + error.message);

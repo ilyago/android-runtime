@@ -1587,7 +1587,7 @@ bool MetadataNode::GetExtendLocation(string& extendLocation)
 
 			string srcFileName = ConvertToString(scriptName);
 			string fullPathToFile;
-			if(srcFileName == "<embedded script>")
+			if(srcFileName == "<embedded>")
 			{
 				// Corner case, extend call is coming from the heap snapshot script
 				// This is possible for lazily compiled code - e.g. from the body of a function

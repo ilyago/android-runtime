@@ -392,11 +392,16 @@ Isolate* Runtime::PrepareV8Runtime(const string& filesPath, jstring packageName,
 			}
 
 			DEBUG_WRITE_FORCE("Creating heap snapshot");
-			*m_startupData = V8::CreateSnapshotDataBlob(customScript.c_str());
+			auto cold_data = V8::CreateSnapshotDataBlob(customScript.c_str());
 
-			if (m_startupData->raw_size == 0) {
-				DEBUG_WRITE_FORCE("Failed to create heap snapshot.");
+			if (cold_data.raw_size == 0) {
+				DEBUG_WRITE_FORCE("Failed to create cold snapshot.");
 			} else {
+				DEBUG_WRITE_FORCE("Warming up heap snapshot");
+				*m_startupData = V8::WarmUpSnapshotDataBlob(cold_data, "this.__warmup && this.__warmup()");
+
+				delete[] cold_data.data;
+
 				bool writeSuccess = File::WriteBinary(snapshotPath, m_startupData->data, m_startupData->raw_size);
 
 				if (!writeSuccess) {
