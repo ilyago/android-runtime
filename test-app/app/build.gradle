@@ -1,4 +1,12 @@
+def metadataParams = new LinkedList <String> ()
+def allJarPaths = new LinkedList <String> ()
 def isWinOs = System.properties['os.name'].toLowerCase().contains('windows')
+
+//todo: fix
+def HARDCODED_SDK_PATH = "/home/plamen5kov/tools/android-sdk-linux"
+def HARDCODER_ANDROID_PATH = "/home/plamen5kov/tools/android-sdk-linux/platforms/android-22/android.jar";
+
+project.ext.selectedBuildType = project.hasProperty("release") ? "release" : "debug"
 
 apply plugin: 'com.android.model.application'
 
@@ -40,6 +48,130 @@ dependencies {
     compile 'com.android.support:appcompat-v7:23.3.0'
 }
 
+/////////////////////////////// building application ///////////////////////////////////////
+
+task ensureMetadataOutDir {
+	def outputDir = file("$projectDir/metadata/output/assets/metadata")
+	outputDir.mkdirs()
+}
+
+task collectAllJars {
+	description "gathers all paths to jar dependencies before building metadata with them"
+
+	def explodedAarDir = project.buildDir.getAbsolutePath() + "/intermediates/exploded-aar/"
+//	def sdkPath = android.sdkDirectory.getAbsolutePath();
+//	def androidJar = sdkPath + "/platforms/" + android.compileSdkVersion + "/android.jar"
+
+    def androidJar = HARDCODER_ANDROID_PATH
+
+	doFirst {
+		configurations.compile.each { File dependencyFile ->
+			allJarPaths.add(dependencyFile.getAbsolutePath())
+		}
+
+		allJarPaths.add(androidJar);
+
+		def ft = fileTree(dir: explodedAarDir, include: "**/*.jar")
+		ft.each { currentJarFile ->
+			allJarPaths.add(currentJarFile.getAbsolutePath())
+		}
+
+		metadataParams.add("metadata-generator.jar")
+		metadataParams.add("$projectDir/metadata/output/assets/metadata")
+		def jars = new LinkedList<File>()
+		for(def i = 0; i < allJarPaths.size(); i++) {
+			metadataParams.add(allJarPaths.get(i));
+			def f = new File(allJarPaths.get(i))
+			if (f.getName().endsWith(".jar")) {
+				jars.add(f)
+			}
+		}
+//		asbgProject.ext.jarFiles = jars
+	}
+}
+
+task buildMetadata (type: JavaExec) {
+	description "builds metadata with provided jar dependencies"
+
+	inputs.files(allJarPaths)
+	inputs.dir("$buildDir/intermediates/classes")
+
+	outputs.files("metadata/output/assets/metadata/treeNodeStream.dat", "metadata/output/assets/metadata/treeStringsStream.dat", "metadata/output/assets/metadata/treeValueStream.dat")
+
+	doFirst {
+		workingDir "build-tools"
+
+		main "-jar"
+
+		// get compiled classes to pass to metadata generator
+		// these need to be called after the classes have compiled
+		def classesDir = "$buildDir/intermediates/classes"
+
+		def classesSubDirs = new File(classesDir).listFiles()
+
+		def selectedBuildType = project.ext.selectedBuildType
+
+		for (File subDir: classesSubDirs) {
+			if (!subDir.getName().equals(selectedBuildType)) {
+				def subDirBuildType = new File(subDir, selectedBuildType)
+				if (subDirBuildType.exists()) {
+					metadataParams.add(subDirBuildType.getAbsolutePath());
+				}
+			}
+		}
+
+		def classesDirBuildType = new File(classesDir, selectedBuildType)
+		if (classesDirBuildType.exists()) {
+			metadataParams.add(classesDirBuildType.getAbsolutePath())
+		}
+
+		args metadataParams.toArray()
+	}
+
+	doLast {
+		copy {
+			from "$projectDir/metadata/output/assets/metadata"
+			into "$projectDir/src/main/assets/metadata"
+		}
+
+		def files = new File("${buildDir}/intermediates/res").listFiles()
+		def tmpResourceAPK = null
+		for (File f: files) {
+			def name = f.getName();
+			if (name.endsWith(".ap_")) {
+				tmpResourceAPK = f;
+				break;
+			}
+		}
+
+		def sdkPath = HARDCODED_SDK_PATH
+		def aaptCommand = "${sdkPath}/build-tools/23.0.3/aapt"
+		if (isWinOs) {
+			aaptCommand += ".exe"
+		}
+
+		def tmpAPKPath = tmpResourceAPK.getPath()
+
+		def removeCmdParams = new ArrayList<String>([aaptCommand, "remove", tmpAPKPath, "assets/metadata/treeNodeStream.dat", "assets/metadata/treeStringsStream.dat", "assets/metadata/treeValueStream.dat"])
+
+		exec {
+			ignoreExitValue true
+			workingDir "$projectDir/metadata/output"
+			commandLine removeCmdParams.toArray()
+		}
+
+		def addCmdParams = new ArrayList<String>([aaptCommand, "add", tmpAPKPath, "assets/metadata/treeNodeStream.dat", "assets/metadata/treeStringsStream.dat", "assets/metadata/treeValueStream.dat"])
+
+		exec {
+			workingDir "$projectDir/metadata/output"
+			commandLine addCmdParams.toArray()
+		}
+	}
+}
+
+/////////////////////////////// installing application ////////////////////////////
+
+
 task deleteDist (type: Delete) {
 	doFirst {
         delete "$rootDir/dist"
@@ -49,7 +181,7 @@ task deleteDist (type: Delete) {
 task installApk (type: Exec) {
 	doFirst {
 		println "Attempting to install buit apk"
-		
+
 		if(isWinOs) {
 			commandLine "cmd", "/c", "node", "$rootDir\\tools\\deploy-apk.js", "$rootDir\\app\\build\\outputs\\apk\\app-debug.apk"
 		}
@@ -57,7 +189,7 @@ task installApk (type: Exec) {
 			commandLine "node", "$rootDir/tools/deploy-apk.js", "$rootDir/app/build/outputs/apk/app-debug.apk"
 		}
 	}
-    
+
     doLast {
         println "Install result:" + execResult
     }
@@ -66,7 +198,7 @@ task installApk (type: Exec) {
 task deletePreviousResultXml (type: Exec) {
 	doFirst {
         println "Removing previous android_unit_test_results.xml"
-        
+
         if(isWinOs) {
             commandLine "cmd", "/c", "adb", "shell", "rm", "-rf", "/sdcard/android_unit_test_results.xml"
         }
@@ -79,7 +211,7 @@ task deletePreviousResultXml (type: Exec) {
 task startInstalledApk (type: Exec) {
 	doFirst {
 		println "Starting test application"
-		
+
 		if(isWinOs) {
 			commandLine "cmd", "/c", "adb", "shell", "am", "start", "-n", "com.tns.android_runtime_testapp/com.tns.NativeScriptActivity", "-a", "android.intent.action.MAIN", "-c", "android.intent.category.LAUNCHER"
 		}
@@ -96,10 +228,10 @@ task createDistFolder {
 	}
 }
 
-task waitForUnitTestResultFile (type: Exec) {	
+task waitForUnitTestResultFile (type: Exec) {
 	doFirst {
 		println "Waiting for tests to finish..."
-		
+
 		if(isWinOs) {
 			commandLine "cmd", "/c", "node", "$rootDir\\tools\\try_to_find_test_result_file.js"
 		}
@@ -109,7 +241,7 @@ task waitForUnitTestResultFile (type: Exec) {
 	}
 }
 
-task copyResultToDist (type: Copy) {	
+task copyResultToDist (type: Copy) {
 	from "$rootDir/app/android_unit_test_results.xml"
 	into "$rootDir/dist"
 }
@@ -118,6 +250,12 @@ task deleteRootLevelResult (type: Delete) {
 	delete "$rootDir/app/android_unit_test_results.xml"
 }
 
+//building metadata and packing project
+collectAllJars.dependsOn(ensureMetadataOutDir)
+buildMetadata.dependsOn(collectAllJars)
+deleteDist.dependsOn(buildMetadata)
+
+//install
 deletePreviousResultXml.dependsOn(deleteDist)
 installApk.dependsOn(deletePreviousResultXml)
 startInstalledApk.dependsOn(installApk)
@@ -137,5 +275,5 @@ tasks.whenTaskAdded { task ->
     if (task.getName() == "assembleDebug")
 	{
 		runtests.dependsOn assembleDebug
-	} 
+	}
 }
