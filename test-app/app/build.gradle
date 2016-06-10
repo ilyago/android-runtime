@@ -2,6 +2,11 @@ def metadataParams = new LinkedList <String> ()
 def allJarPaths = new LinkedList <String> ()
 def isWinOs = System.properties['os.name'].toLowerCase().contains('windows')
 
+def dontRunSbg = project.hasProperty("dontRunSbg");
+def asbgProject = project(":asbg")
+asbgProject.ext.outDir = new File("$projectDir", "src/main/java")
+asbgProject.ext.jsCodeDir = new File("$projectDir", "src/main/assets/app")
+
 //todo: fix
 def HARDCODED_SDK_PATH = "/home/plamen5kov/tools/android-sdk-linux"
 def HARDCODER_ANDROID_PATH = "/home/plamen5kov/tools/android-sdk-linux/platforms/android-22/android.jar";
@@ -38,6 +43,28 @@ model {
             proguardFiles.add(file('proguard-rules.txt'))
         }
     }
+
+//	Error:A problem occurred configuring project ':app'.
+//			> The following model rules could not be applied due to unbound inputs and/or subjects:
+//	abndroid.applicationVariants.all { ... } @ app/build.gradle line 47, column 2
+//	subject:
+//	- abndroid.applicationVariants.all Object [*]
+//	[*] - indicates that a model item could not be found for the path or type.
+
+	abndroid.applicationVariants.all { variant ->
+		def variantName = variant.name.capitalize()
+		def compileSourcesTaskName = "compile${variantName}Sources"
+		def compileSourcesTask = project.tasks.findByName(compileSourcesTaskName)
+
+		def generateBuildConfigTask = variant.generateBuildConfig;
+		generateBuildConfigTask.finalizedBy(collectAllJars)
+
+		if(!dontRunSbg) {
+			collectAllJars.finalizedBy(setProperties)
+		}
+
+		compileSourcesTask.finalizedBy(buildMetadata)
+	}
 }
 
 dependencies {
@@ -86,7 +113,7 @@ task collectAllJars {
 				jars.add(f)
 			}
 		}
-//		asbgProject.ext.jarFiles = jars
+		asbgProject.ext.jarFiles = jars
 	}
 }
 
@@ -169,6 +196,24 @@ task buildMetadata (type: JavaExec) {
 	}
 }
 
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////// OPTIONAL TASKS //////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+task setProperties {
+	project.ext.jarFiles = []
+	doLast {
+		def list = [];
+		allJarPaths.each({f ->
+			if(f.endsWith(".jar")) {
+				list.add(f);
+			}
+		})
+		project.jarFiles = list;
+	}
+}
+
+setProperties.finalizedBy("asbg:generateBindings")
+
 /////////////////////////////// installing application ////////////////////////////
 
 
@@ -249,11 +294,6 @@ task copyResultToDist (type: Copy) {
 task deleteRootLevelResult (type: Delete) {
 	delete "$rootDir/app/android_unit_test_results.xml"
 }
-
-//building metadata and packing project
-collectAllJars.dependsOn(ensureMetadataOutDir)
-buildMetadata.dependsOn(collectAllJars)
-deleteDist.dependsOn(buildMetadata)
 
 //install
 deletePreviousResultXml.dependsOn(deleteDist)

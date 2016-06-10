@@ -1,5 +1,7 @@
-include ':binding-generator', ':runtime' ,':app'
-
+include ':binding-generator', ':runtime' ,':app', ':asbg'
 
 project(':binding-generator').projectDir = new File("../", "binding-generator")
 project(':runtime').projectDir = new File("../", "runtime")
+project(":asbg").projectDir = file("app/build-tools/android-static-binding-generator")
+
+
