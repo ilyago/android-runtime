@@ -14,7 +14,8 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle-experimental:0.7.0-beta3'
+        // classpath 'com.android.tools.build:gradle-experimental:0.7.0-beta3'
+        classpath 'com.android.tools.build:gradle:2.1.0'
     }
 }
 

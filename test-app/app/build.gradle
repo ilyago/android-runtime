@@ -1,5 +1,5 @@
-def metadataParams = new LinkedList <String> ()
-def allJarPaths = new LinkedList <String> ()
+def metadataParams = new LinkedList<String>()
+def allJarPaths = new LinkedList<String>()
 def isWinOs = System.properties['os.name'].toLowerCase().contains('windows')
 
 def dontRunSbg = project.hasProperty("dontRunSbg");
@@ -7,42 +7,62 @@ def asbgProject = project(":asbg")
 asbgProject.ext.outDir = new File("$projectDir", "src/main/java")
 asbgProject.ext.jsCodeDir = new File("$projectDir", "src/main/assets/app")
 
-//todo: fix
-def HARDCODED_SDK_PATH = "/home/plamen5kov/tools/android-sdk-linux"
-def HARDCODER_ANDROID_PATH = "/home/plamen5kov/tools/android-sdk-linux/platforms/android-22/android.jar";
-
 project.ext.selectedBuildType = project.hasProperty("release") ? "release" : "debug"
 
-apply plugin: 'com.android.model.application'
-
-model {
-    android {
-        compileSdkVersion = 23
-        buildToolsVersion = "23.0.3"
-
-        defaultConfig.with {
-            applicationId = "com.tns.android_runtime_testapp"
-            minSdkVersion.apiLevel = 17
-            targetSdkVersion.apiLevel = 22
-            versionCode = 1
-            versionName = "1.0"
-        }
-
-        lintOptions.with {
-            abortOnError = false
-        }
+buildscript {
+    repositories {
+        jcenter()
     }
 
-//    android.ndk {
-//        moduleName = "test-app-dummy-native-lib"
-//    }
-
-    android.buildTypes {
-        release {
-            minifyEnabled = false
-            proguardFiles.add(file('proguard-rules.txt'))
-        }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:2.1.0'
     }
+}
+
+apply plugin: "com.android.application"
+
+android {
+    compileSdkVersion = 23
+    buildToolsVersion = "23.0.3"
+
+    defaultConfig.with {
+        applicationId = "com.tns.android_runtime_testapp"
+        minSdkVersion = 17
+        targetSdkVersion = 22
+        versionCode = 1
+        versionName = "1.0"
+    }
+
+    lintOptions.with {
+        abortOnError = false
+    }
+
+    applicationVariants.all { variant ->
+        def variantName = variant.name.capitalize()
+        def compileSourcesTaskName = "compile${variantName}Sources"
+        def compileSourcesTask = project.tasks.findByName(compileSourcesTaskName)
+
+        def generateBuildConfigTask = variant.generateBuildConfig;
+        generateBuildConfigTask.finalizedBy(collectAllJars)
+
+        if(!dontRunSbg) {
+            collectAllJars.finalizedBy(setProperties)
+        }
+
+        compileSourcesTask.finalizedBy(buildMetadata)
+    }
+}
+
+android.buildTypes {
+    release {
+        minifyEnabled = false
+        proguardFiles.add(file('proguard-rules.txt'))
+    }
+
+    debug {
+
+    }
+}
 
 //	Error:A problem occurred configuring project ':app'.
 //			> The following model rules could not be applied due to unbound inputs and/or subjects:
@@ -51,21 +71,27 @@ model {
 //	- abndroid.applicationVariants.all Object [*]
 //	[*] - indicates that a model item could not be found for the path or type.
 
-	abndroid.applicationVariants.all { variant ->
-		def variantName = variant.name.capitalize()
-		def compileSourcesTaskName = "compile${variantName}Sources"
-		def compileSourcesTask = project.tasks.findByName(compileSourcesTaskName)
 
-		def generateBuildConfigTask = variant.generateBuildConfig;
-		generateBuildConfigTask.finalizedBy(collectAllJars)
+task addApplicationVariants << {
+    // TODO: THESE ARE CURRENTLY HARDCODED FOR COMPATIBILITY REASONS
+    def variants = ["release", "debug"];
 
-		if(!dontRunSbg) {
-			collectAllJars.finalizedBy(setProperties)
-		}
+    variants.all { variant ->
+        def variantName = variant.name.capitalize()
+        def compileSourcesTaskName = "compile${variantName}Sources"
+        def compileSourcesTask = project.tasks.findByName(compileSourcesTaskName)
 
-		compileSourcesTask.finalizedBy(buildMetadata)
-	}
+        def generateBuildConfigTask = variant.generateBuildConfig;
+        generateBuildConfigTask.finalizedBy(collectAllJars)
+
+        if (!dontRunSbg) {
+            collectAllJars.finalizedBy(setProperties)
+        }
+
+        compileSourcesTask.finalizedBy(buildMetadata)
+    }
 }
+
 
 dependencies {
     compile project(':runtime')
@@ -73,226 +99,224 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:23.3.0'
+    compile "com.android.support:support-v4:23.3.0"
 }
 
 /////////////////////////////// building application ///////////////////////////////////////
 
 task ensureMetadataOutDir {
-	def outputDir = file("$projectDir/metadata/output/assets/metadata")
-	outputDir.mkdirs()
+    def outputDir = file("$projectDir/metadata/output/assets/metadata")
+    outputDir.mkdirs()
 }
 
 task collectAllJars {
-	description "gathers all paths to jar dependencies before building metadata with them"
+    description "gathers all paths to jar dependencies before building metadata with them"
 
-	def explodedAarDir = project.buildDir.getAbsolutePath() + "/intermediates/exploded-aar/"
-//	def sdkPath = android.sdkDirectory.getAbsolutePath();
-//	def androidJar = sdkPath + "/platforms/" + android.compileSdkVersion + "/android.jar"
+    def explodedAarDir = project.buildDir.getAbsolutePath() + "/intermediates/exploded-aar/"
+	def sdkPath = android.sdkDirectory.getAbsolutePath();
+	def androidJar = sdkPath + "/platforms/" + android.compileSdkVersion + "/android.jar"
 
-    def androidJar = HARDCODER_ANDROID_PATH
+    doFirst {
+        configurations.compile.each { File dependencyFile ->
+            if (dependencyFile.getName().endsWith(".jar")) {
+                allJarPaths.add(dependencyFile.getAbsolutePath())
+            }
+        }
 
-	doFirst {
-		configurations.compile.each { File dependencyFile ->
-			allJarPaths.add(dependencyFile.getAbsolutePath())
-		}
+        allJarPaths.add(androidJar);
 
-		allJarPaths.add(androidJar);
+        def ft = fileTree(dir: explodedAarDir, include: "**/*.jar")
+        ft.each { currentJarFile ->
+            allJarPaths.add(currentJarFile.getAbsolutePath())
+        }
 
-		def ft = fileTree(dir: explodedAarDir, include: "**/*.jar")
-		ft.each { currentJarFile ->
-			allJarPaths.add(currentJarFile.getAbsolutePath())
-		}
+        metadataParams.add("metadata-generator.jar")
+        metadataParams.add("$projectDir/metadata/output/assets/metadata")
+        def jars = new LinkedList<File>()
+        for (def i = 0; i < allJarPaths.size(); i++) {
+            metadataParams.add(allJarPaths.get(i));
+            def f = new File(allJarPaths.get(i))
+            if (f.getName().endsWith(".jar")) {
+                jars.add(f)
+            }
+        }
 
-		metadataParams.add("metadata-generator.jar")
-		metadataParams.add("$projectDir/metadata/output/assets/metadata")
-		def jars = new LinkedList<File>()
-		for(def i = 0; i < allJarPaths.size(); i++) {
-			metadataParams.add(allJarPaths.get(i));
-			def f = new File(allJarPaths.get(i))
-			if (f.getName().endsWith(".jar")) {
-				jars.add(f)
-			}
-		}
-		asbgProject.ext.jarFiles = jars
-	}
+        asbgProject.ext.jarFiles = jars
+    }
 }
 
-task buildMetadata (type: JavaExec) {
-	description "builds metadata with provided jar dependencies"
+task buildMetadata(type: JavaExec) {
+    description "builds metadata with provided jar dependencies"
 
-	inputs.files(allJarPaths)
-	inputs.dir("$buildDir/intermediates/classes")
+    inputs.files(allJarPaths)
+    inputs.dir("$buildDir/intermediates/classes")
 
-	outputs.files("metadata/output/assets/metadata/treeNodeStream.dat", "metadata/output/assets/metadata/treeStringsStream.dat", "metadata/output/assets/metadata/treeValueStream.dat")
+    outputs.files("metadata/output/assets/metadata/treeNodeStream.dat", "metadata/output/assets/metadata/treeStringsStream.dat", "metadata/output/assets/metadata/treeValueStream.dat")
 
-	doFirst {
-		workingDir "build-tools"
+    doFirst {
+        workingDir "build-tools"
 
-		main "-jar"
+        main "-jar"
 
-		// get compiled classes to pass to metadata generator
-		// these need to be called after the classes have compiled
-		def classesDir = "$buildDir/intermediates/classes"
+        // get compiled classes to pass to metadata generator
+        // these need to be called after the classes have compiled
+        def classesDir = "$buildDir/intermediates/classes"
 
-		def classesSubDirs = new File(classesDir).listFiles()
+        def classesSubDirs = new File(classesDir).listFiles()
 
-		def selectedBuildType = project.ext.selectedBuildType
+        def selectedBuildType = project.ext.selectedBuildType
 
-		for (File subDir: classesSubDirs) {
-			if (!subDir.getName().equals(selectedBuildType)) {
-				def subDirBuildType = new File(subDir, selectedBuildType)
-				if (subDirBuildType.exists()) {
-					metadataParams.add(subDirBuildType.getAbsolutePath());
-				}
-			}
-		}
+        for (File subDir : classesSubDirs) {
+            if (!subDir.getName().equals(selectedBuildType)) {
+                def subDirBuildType = new File(subDir, selectedBuildType)
+                if (subDirBuildType.exists()) {
+                    metadataParams.add(subDirBuildType.getAbsolutePath());
+                }
+            }
+        }
 
-		def classesDirBuildType = new File(classesDir, selectedBuildType)
-		if (classesDirBuildType.exists()) {
-			metadataParams.add(classesDirBuildType.getAbsolutePath())
-		}
+        def classesDirBuildType = new File(classesDir, selectedBuildType)
+        if (classesDirBuildType.exists()) {
+            metadataParams.add(classesDirBuildType.getAbsolutePath())
+        }
 
-		args metadataParams.toArray()
-	}
+        args metadataParams.toArray()
+    }
 
-	doLast {
-		copy {
-			from "$projectDir/metadata/output/assets/metadata"
-			into "$projectDir/src/main/assets/metadata"
-		}
+    doLast {
+        copy {
+            from "$projectDir/metadata/output/assets/metadata"
+            into "$projectDir/src/main/assets/metadata"
+        }
 
-		def files = new File("${buildDir}/intermediates/res").listFiles()
-		def tmpResourceAPK = null
-		for (File f: files) {
-			def name = f.getName();
-			if (name.endsWith(".ap_")) {
-				tmpResourceAPK = f;
-				break;
-			}
-		}
+        def files = new File("${buildDir}/intermediates/res").listFiles()
+        def tmpResourceAPK = null
+        for (File f : files) {
+            def name = f.getName();
+            if (name.endsWith(".ap_")) {
+                tmpResourceAPK = f;
+                break;
+            }
+        }
 
-		def sdkPath = HARDCODED_SDK_PATH
-		def aaptCommand = "${sdkPath}/build-tools/23.0.3/aapt"
-		if (isWinOs) {
-			aaptCommand += ".exe"
-		}
+        def sdkPath = android.sdkDirectory.getAbsolutePath();
+        def aaptCommand = "${sdkPath}/build-tools/23.0.3/aapt"
+        if (isWinOs) {
+            aaptCommand += ".exe"
+        }
 
-		def tmpAPKPath = tmpResourceAPK.getPath()
+        def tmpAPKPath = tmpResourceAPK.getPath()
 
-		def removeCmdParams = new ArrayList<String>([aaptCommand, "remove", tmpAPKPath, "assets/metadata/treeNodeStream.dat", "assets/metadata/treeStringsStream.dat", "assets/metadata/treeValueStream.dat"])
+        def removeCmdParams = new ArrayList<String>([aaptCommand, "remove", tmpAPKPath, "assets/metadata/treeNodeStream.dat", "assets/metadata/treeStringsStream.dat", "assets/metadata/treeValueStream.dat"])
 
-		exec {
-			ignoreExitValue true
-			workingDir "$projectDir/metadata/output"
-			commandLine removeCmdParams.toArray()
-		}
+        exec {
+            ignoreExitValue true
+            workingDir "$projectDir/metadata/output"
+            commandLine removeCmdParams.toArray()
+        }
 
-		def addCmdParams = new ArrayList<String>([aaptCommand, "add", tmpAPKPath, "assets/metadata/treeNodeStream.dat", "assets/metadata/treeStringsStream.dat", "assets/metadata/treeValueStream.dat"])
+        def addCmdParams = new ArrayList<String>([aaptCommand, "add", tmpAPKPath, "assets/metadata/treeNodeStream.dat", "assets/metadata/treeStringsStream.dat", "assets/metadata/treeValueStream.dat"])
 
-		exec {
-			workingDir "$projectDir/metadata/output"
-			commandLine addCmdParams.toArray()
-		}
-	}
+        exec {
+            workingDir "$projectDir/metadata/output"
+            commandLine addCmdParams.toArray()
+        }
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////// OPTIONAL TASKS //////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 task setProperties {
-	project.ext.jarFiles = []
-	doLast {
-		def list = [];
-		allJarPaths.each({f ->
-			if(f.endsWith(".jar")) {
-				list.add(f);
-			}
-		})
-		project.jarFiles = list;
-	}
+    project.ext.jarFiles = []
+    doLast {
+        def list = [];
+        allJarPaths.each({ f ->
+            if (f.endsWith(".jar")) {
+                list.add(f);
+            }
+        })
+        project.jarFiles = list;
+    }
 }
 
-setProperties.finalizedBy("asbg:generateBindings")
+setProperties.finalizedBy(":asbg:generateBindings")
 
 /////////////////////////////// installing application ////////////////////////////
 
 
-task deleteDist (type: Delete) {
-	doFirst {
+task deleteDist(type: Delete) {
+    doFirst {
         delete "$rootDir/dist"
-	}
+    }
 }
 
-task installApk (type: Exec) {
-	doFirst {
-		println "Attempting to install buit apk"
+task installApk(type: Exec) {
+    doFirst {
+        println "Attempting to install buit apk"
 
-		if(isWinOs) {
-			commandLine "cmd", "/c", "node", "$rootDir\\tools\\deploy-apk.js", "$rootDir\\app\\build\\outputs\\apk\\app-debug.apk"
-		}
-		else {
-			commandLine "node", "$rootDir/tools/deploy-apk.js", "$rootDir/app/build/outputs/apk/app-debug.apk"
-		}
-	}
+        if (isWinOs) {
+            commandLine "cmd", "/c", "node", "$rootDir\\tools\\deploy-apk.js", "$rootDir\\app\\build\\outputs\\apk\\app-debug.apk"
+        } else {
+            commandLine "node", "$rootDir/tools/deploy-apk.js", "$rootDir/app/build/outputs/apk/app-debug.apk"
+        }
+    }
 
     doLast {
         println "Install result:" + execResult
     }
 }
 
-task deletePreviousResultXml (type: Exec) {
-	doFirst {
+task deletePreviousResultXml(type: Exec) {
+    doFirst {
         println "Removing previous android_unit_test_results.xml"
 
-        if(isWinOs) {
+        if (isWinOs) {
             commandLine "cmd", "/c", "adb", "shell", "rm", "-rf", "/sdcard/android_unit_test_results.xml"
-        }
-        else {
+        } else {
             commandLine "adb", "shell", "rm", "-rf", "/sdcard/android_unit_test_results.xml"
         }
     }
 }
 
-task startInstalledApk (type: Exec) {
-	doFirst {
-		println "Starting test application"
+task startInstalledApk(type: Exec) {
+    doFirst {
+        println "Starting test application"
 
-		if(isWinOs) {
-			commandLine "cmd", "/c", "adb", "shell", "am", "start", "-n", "com.tns.android_runtime_testapp/com.tns.NativeScriptActivity", "-a", "android.intent.action.MAIN", "-c", "android.intent.category.LAUNCHER"
-		}
-		else {
-			commandLine "adb", "shell", "am", "start", "-n", "com.tns.android_runtime_testapp/com.tns.NativeScriptActivity", "-a", "android.intent.action.MAIN", "-c", "android.intent.category.LAUNCHER"
-		}
-	}
+        if (isWinOs) {
+            commandLine "cmd", "/c", "adb", "shell", "am", "start", "-n", "com.tns.android_runtime_testapp/com.tns.NativeScriptActivity", "-a", "android.intent.action.MAIN", "-c", "android.intent.category.LAUNCHER"
+        } else {
+            commandLine "adb", "shell", "am", "start", "-n", "com.tns.android_runtime_testapp/com.tns.NativeScriptActivity", "-a", "android.intent.action.MAIN", "-c", "android.intent.category.LAUNCHER"
+        }
+    }
 }
 
 task createDistFolder {
-	doLast {
-		def distDir = file("$rootDir/dist")
-		distDir.mkdirs()
-	}
+    doLast {
+        def distDir = file("$rootDir/dist")
+        distDir.mkdirs()
+    }
 }
 
-task waitForUnitTestResultFile (type: Exec) {
-	doFirst {
-		println "Waiting for tests to finish..."
+task waitForUnitTestResultFile(type: Exec) {
+    doFirst {
+        println "Waiting for tests to finish..."
 
-		if(isWinOs) {
-			commandLine "cmd", "/c", "node", "$rootDir\\tools\\try_to_find_test_result_file.js"
-		}
-		else {
-			commandLine "node", "$rootDir/tools/try_to_find_test_result_file.js"
-		}
-	}
+        if (isWinOs) {
+            commandLine "cmd", "/c", "node", "$rootDir\\tools\\try_to_find_test_result_file.js"
+        } else {
+            commandLine "node", "$rootDir/tools/try_to_find_test_result_file.js"
+        }
+    }
 }
 
-task copyResultToDist (type: Copy) {
-	from "$rootDir/app/android_unit_test_results.xml"
-	into "$rootDir/dist"
+task copyResultToDist(type: Copy) {
+    from "$rootDir/app/android_unit_test_results.xml"
+    into "$rootDir/dist"
 }
 
-task deleteRootLevelResult (type: Delete) {
-	delete "$rootDir/app/android_unit_test_results.xml"
+task deleteRootLevelResult(type: Delete) {
+    delete "$rootDir/app/android_unit_test_results.xml"
 }
 
 //install
@@ -304,16 +328,13 @@ waitForUnitTestResultFile.dependsOn(createDistFolder)
 copyResultToDist.dependsOn(waitForUnitTestResultFile)
 deleteRootLevelResult.dependsOn(copyResultToDist)
 
-
-
 task runtests {
-	dependsOn deleteRootLevelResult
+    dependsOn deleteRootLevelResult
 }
 
 tasks.whenTaskAdded { task ->
 
-    if (task.getName() == "assembleDebug")
-	{
-		runtests.dependsOn assembleDebug
-	}
+    if (task.getName() == "assembleDebug") {
+        runtests.dependsOn assembleDebug
+    }
 }
