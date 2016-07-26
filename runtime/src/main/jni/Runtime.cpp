@@ -34,6 +34,7 @@ using namespace std;
 using namespace tns;
 
 #include "V8GlobalHelpers.h"
+#include "include/v8.h"
 
 //TODO: Lubo: properly release this jni global ref on shutdown
 
@@ -364,6 +365,29 @@ static void InitializeV8() {
 	V8::Initialize();
 }
 
+void Runtime::PrintMeBabyOneMoreTime(const v8::FunctionCallbackInfo<v8::Value>& args)
+{
+	try {
+		if ((args.Length() > 0) && args[0]->IsString()) {
+			String::Utf8Value message(args[0]->ToString());
+			DEBUG_WRITE_FORCE("__printf: %s", *message);
+		}
+	}
+	catch (NativeScriptException &e) {
+		e.ReThrowToV8();
+	}
+	catch (std::exception e) {
+		stringstream ss;
+		ss << "Error: c++ exception: " << e.what() << endl;
+		NativeScriptException nsEx(ss.str());
+		nsEx.ReThrowToV8();
+	}
+	catch (...) {
+		NativeScriptException nsEx(std::string("Error: c++ exception!"));
+		nsEx.ReThrowToV8();
+	}
+}
+
 Isolate* Runtime::PrepareV8Runtime(const string& filesPath, jstring packageName, jobject jsDebugger, jstring profilerOutputDir)
 {
 	Isolate::CreateParams create_params;
@@ -474,7 +498,7 @@ Isolate* Runtime::PrepareV8Runtime(const string& filesPath, jstring packageName,
 	globalTemplate->Set(ConvertToV8String("__exit"), FunctionTemplate::New(isolate, CallbackHandlers::ExitMethodCallback));
 	globalTemplate->Set(ConvertToV8String("__runtimeVersion"), ConvertToV8String(NATIVE_SCRIPT_RUNTIME_VERSION), readOnlyFlags);
 	globalTemplate->Set(ConvertToV8String("Worker"), FunctionTemplate::New(isolate, CallbackHandlers::NewThreadCallback));
-//	globalTemplate->Set(ConvertToV8String("__asd"))
+	globalTemplate->Set(ConvertToV8String("__printf"), FunctionTemplate::New(isolate, Runtime::PrintMeBabyOneMoreTime));
 
 	m_weakRef.Init(isolate, globalTemplate, m_objectManager);
 

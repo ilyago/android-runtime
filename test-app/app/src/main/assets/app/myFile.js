@@ -2,8 +2,20 @@
 
 //android.util.Log.v("~AJKSHDJKASHKJDHASJKDHASDJAS", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAASDJKLASDJKLQWUI(DJKLzx ")
 
+var i = 5;
+//while(true) {
+//    i++;
+//    if(i % 10000000 === 0) {
+//        __printf();
+//    }
+//}
+//throw "PESHOOOOOOOOOOO JEEEEEEEENKIIIIIIIIIIIIIIIIIIIIIIIIIIIIINS";
 
 var pesho = require("./myRequiredFile.js");
+
+var pToStr = pesho.toString();
+
+__printf(pToStr);
 
 var a = "1337 string ez gg wp";
 

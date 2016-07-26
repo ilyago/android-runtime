@@ -10,6 +10,7 @@
 #include "Profiler.h"
 #include "Module.h"
 #include "File.h"
+#include "include/v8.h"
 
 jobject ConvertJsValueToJavaObject(tns::JEnv& env, const v8::Local<v8::Value>& value, int classReturnType);
 
@@ -45,6 +46,8 @@ namespace tns
 
 		private:
 			Runtime(JNIEnv *env, jobject runtime, int id);
+
+			static void PrintMeBabyOneMoreTime(const v8::FunctionCallbackInfo<v8::Value>& args);
 
 			JEnv m_env;
 			int m_id;

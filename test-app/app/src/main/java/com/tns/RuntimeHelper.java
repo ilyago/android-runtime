@@ -153,7 +153,7 @@ public final class RuntimeHelper {
         Thread runtimeThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                Thread.currentThread().setName("new java thread");
+                Thread.currentThread().setName("Worker: \'" + filePath + "\'");
                 init(appName, appDir, filePath);
             }
         });
