@@ -71,7 +71,8 @@ void CallbackHandlers::Init(Isolate *isolate, ObjectManager *objectManager) {
     RUNTIME_HELPER = env.FindClass("com/tns/RuntimeHelper");
     assert(RUNTIME_HELPER != nullptr);
 
-    INIT_RUNTIME_ON_NEW_THREAD_ID = env.GetStaticMethodID(RUNTIME_HELPER, "initRuntimeOnNewThread", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
+    INIT_RUNTIME_ON_NEW_THREAD_ID = env.GetStaticMethodID(RUNTIME_HELPER, "initRuntimeOnNewThread",
+                                                          "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
     assert(INIT_RUNTIME_ON_NEW_THREAD_ID != nullptr);
 
     MetadataNode::Init(isolate);
@@ -110,7 +111,6 @@ bool CallbackHandlers::RegisterInstance(Isolate *isolate, const Local<Object> &j
     {
         JavaObjectIdScope objIdScope(env, CURRENT_OBJECTID_FIELD_ID, runtime->GetJavaRuntime(),
                                      javaObjectID);
-
         if (argWrapper.type == ArgType::Interface) {
             instance = env.NewObject(generatedJavaClass, mi.mid);
         }
@@ -165,11 +165,11 @@ jclass CallbackHandlers::ResolveClass(Isolate *isolate, const string &fullClassn
 
         // create or load generated binding (java class)
         JniLocalRef generatedClass(env.CallObjectMethod(runtime->GetJavaRuntime(),
-                                     RESOLVE_CLASS_METHOD_ID,
-                                     (jstring) javaFullClassName,
-                                     methodOverrides,
-                                     implementedInterfaces,
-                                     isInterface));
+                                                        RESOLVE_CLASS_METHOD_ID,
+                                                        (jstring) javaFullClassName,
+                                                        methodOverrides,
+                                                        implementedInterfaces,
+                                                        isInterface));
 
         globalRefToGeneratedClass = static_cast<jclass>(env.NewGlobalRef(generatedClass));
 
@@ -180,13 +180,14 @@ jclass CallbackHandlers::ResolveClass(Isolate *isolate, const string &fullClassn
 }
 
 // Called by ExtendCallMethodCallback when extending a class
-string CallbackHandlers::ResolveClassName(Isolate *isolate, const string& fullClassname, const Local<Object>& implementationObject, bool isInterface)
-{
-	auto clazz = ResolveClass(isolate, fullClassname, implementationObject, isInterface);
-	auto runtime = Runtime::GetRuntime(isolate);
-	auto objectManager = runtime->GetObjectManager();
-	auto className = objectManager->GetClassName(clazz);
-	return className;
+string CallbackHandlers::ResolveClassName(Isolate *isolate, const string &fullClassname,
+                                          const Local<Object> &implementationObject,
+                                          bool isInterface) {
+    auto clazz = ResolveClass(isolate, fullClassname, implementationObject, isInterface);
+    auto runtime = Runtime::GetRuntime(isolate);
+    auto objectManager = runtime->GetObjectManager();
+    auto className = objectManager->GetClassName(clazz);
+    return className;
 }
 
 Local<Value> CallbackHandlers::GetArrayElement(Isolate *isolate, const Local<Object> &array,
@@ -578,7 +579,8 @@ Local<Object> CallbackHandlers::CreateJSWrapper(Isolate *isolate, jint javaObjec
     return objectManager->CreateJSWrapper(javaObjectID, typeName);
 }
 
-jobjectArray CallbackHandlers::GetImplementedInterfaces(JEnv &env, const Local<Object> &implementationObject) {
+jobjectArray CallbackHandlers::GetImplementedInterfaces(JEnv &env,
+                                                        const Local<Object> &implementationObject) {
     if (implementationObject.IsEmpty()) {
         return JavaObjectArrayCache::GetJavaStringArray(0);
     }
@@ -592,32 +594,33 @@ jobjectArray CallbackHandlers::GetImplementedInterfaces(JEnv &env, const Local<O
         bool arrFound = !prop.IsEmpty() && prop->IsArray();
 
         if (arrFound) {
-                v8::String::Utf8Value propName(name);
-                // convert it to string
-                std::string arrNameC = std::string(*propName);
-                if (arrNameC == "interfaces") {
-                    auto interfacesArr = prop->ToObject();
+            v8::String::Utf8Value propName(name);
+            // convert it to string
+            std::string arrNameC = std::string(*propName);
+            if (arrNameC == "interfaces") {
+                auto interfacesArr = prop->ToObject();
 
-                    auto isolate = Isolate::GetCurrent();
-                    int length = interfacesArr->Get(v8::String::NewFromUtf8(isolate, "length"))->ToObject()->Uint32Value();
+                auto isolate = Isolate::GetCurrent();
+                int length = interfacesArr->Get(
+                        v8::String::NewFromUtf8(isolate, "length"))->ToObject()->Uint32Value();
 
-                    if(length > 0) {
-                        for (int i = 0; i < length; i++) {
-                            auto element = interfacesArr->Get(i);
+                if (length > 0) {
+                    for (int i = 0; i < length; i++) {
+                        auto element = interfacesArr->Get(i);
 
-                            if(element->IsFunction()) {
-                                auto node = MetadataNode::GetTypeMetadataName(isolate, element);
+                        if (element->IsFunction()) {
+                            auto node = MetadataNode::GetTypeMetadataName(isolate, element);
 
-                                Util::ReplaceAll(node, std::string("/"), std::string("."));
+                            Util::ReplaceAll(node, std::string("/"), std::string("."));
 
-                                jstring value = env.NewStringUTF(node.c_str());
-                                interfacesToImplement.push_back(value);
-                            }
+                            jstring value = env.NewStringUTF(node.c_str());
+                            interfacesToImplement.push_back(value);
                         }
                     }
                 }
             }
         }
+    }
 
     int interfacesCount = interfacesToImplement.size();
 
@@ -633,7 +636,8 @@ jobjectArray CallbackHandlers::GetImplementedInterfaces(JEnv &env, const Local<O
     return implementedInterfaces;
 }
 
-jobjectArray CallbackHandlers::GetMethodOverrides(JEnv &env, const Local<Object> &implementationObject) {
+jobjectArray CallbackHandlers::GetMethodOverrides(JEnv &env,
+                                                  const Local<Object> &implementationObject) {
     if (implementationObject.IsEmpty()) {
         return JavaObjectArrayCache::GetJavaStringArray(0);
     }
@@ -775,12 +779,14 @@ void CallbackHandlers::ExitMethodCallback(const v8::FunctionCallbackInfo<v8::Val
 }
 
 void CallbackHandlers::NewThreadCallback(const v8::FunctionCallbackInfo<v8::Value> &args) {
+    HandleScope handleScope(args.GetIsolate());
     try {
         if (!args.IsConstructCall()) {
             throw NativeScriptException("Worker should be called with new keyword");
         }
-        if(args.Length() > 1 || !args[0]->IsString()) {
-            throw NativeScriptException("Worker should be called with one string parameter (name of file to load)");
+        if (args.Length() > 1 || !args[0]->IsString()) {
+            throw NativeScriptException(
+                    "Worker should be called with one string parameter (name of file to load)");
         }
 
         DEBUG_WRITE("Called worker callback!");
@@ -793,7 +799,8 @@ void CallbackHandlers::NewThreadCallback(const v8::FunctionCallbackInfo<v8::Valu
         JniLocalRef appName(env.NewStringUTF(Constants::PACKAGE_NAME.c_str()));
         JniLocalRef filePath(ConvertToJavaString(args[0]));
 
-        env.CallStaticVoidMethod(RUNTIME_HELPER, INIT_RUNTIME_ON_NEW_THREAD_ID, (jstring) appName, (jstring)appFolder, (jstring)filePath);
+        env.CallStaticVoidMethod(RUNTIME_HELPER, INIT_RUNTIME_ON_NEW_THREAD_ID, (jstring) appName,
+                                 (jstring) appFolder, (jstring) filePath);
 
     } catch (NativeScriptException &e) {
         e.ReThrowToV8();

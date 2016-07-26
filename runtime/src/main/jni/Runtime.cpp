@@ -132,7 +132,15 @@ void Runtime::Init(jstring filesPath, bool verboseLoggingEnabled, jstring packag
 	LogEnabled = m_logEnabled = verboseLoggingEnabled;
 
 	auto filesRoot = ArgConverter::jstringToString(filesPath);
-	Constants::APP_ROOT_FOLDER_PATH = filesRoot + "/app/";
+
+	// TODO: Pete: remove this hackery by passing valid filesRoot on new thread without the /app suffix
+	if(jsDebugger != nullptr) {
+		Constants::APP_ROOT_FOLDER_PATH = filesRoot + "/app/";
+	} else {
+		filesRoot = filesRoot.substr(0, filesRoot.length() - 3);
+		Constants::APP_ROOT_FOLDER_PATH = filesRoot;
+	}
+
 	Constants::PACKAGE_NAME = ArgConverter::jstringToString(packageName);
 	// read config options passed from Java
 	JniLocalRef v8Flags(m_env.GetObjectArrayElement(args, 0));
@@ -170,6 +178,7 @@ jobject Runtime::RunScript(JNIEnv *_env, jobject obj, jstring scriptFile)
 	auto context = isolate->GetCurrentContext();
 
 	auto filename = ArgConverter::jstringToString(scriptFile);
+	DEBUG_WRITE_FORCE("Script fileName: %s", filename.c_str());
 	auto src = File::ReadText(filename);
 	auto source = ConvertToV8String(src);
 
@@ -436,9 +445,13 @@ Isolate* Runtime::PrepareV8Runtime(const string& filesPath, jstring packageName,
 		create_params.snapshot_blob = m_startupData;
 	}
 
-	if (!didInitializeV8) {
+	DEBUG_WRITE_FORCE("~~~~~~~~~~ Metadata filesPath: %s", filesPath.c_str());
+
+	// TODO: Pete: remove the hacky jsDebugger check (used to determnie whether we are on a new thread - cuz debugger is null)
+	if (!didInitializeV8 && jsDebugger != nullptr) {
 		InitializeV8();
 	}
+
 	auto isolate = Isolate::New(create_params);
 	Isolate::Scope isolate_scope(isolate);
 	HandleScope handleScope(isolate);
@@ -461,6 +474,7 @@ Isolate* Runtime::PrepareV8Runtime(const string& filesPath, jstring packageName,
 	globalTemplate->Set(ConvertToV8String("__exit"), FunctionTemplate::New(isolate, CallbackHandlers::ExitMethodCallback));
 	globalTemplate->Set(ConvertToV8String("__runtimeVersion"), ConvertToV8String(NATIVE_SCRIPT_RUNTIME_VERSION), readOnlyFlags);
 	globalTemplate->Set(ConvertToV8String("Worker"), FunctionTemplate::New(isolate, CallbackHandlers::NewThreadCallback));
+//	globalTemplate->Set(ConvertToV8String("__asd"))
 
 	m_weakRef.Init(isolate, globalTemplate, m_objectManager);
 
@@ -491,7 +505,10 @@ Isolate* Runtime::PrepareV8Runtime(const string& filesPath, jstring packageName,
 	m_profiler.Init(isolate, global, pckName, outputDir);
 	JsDebugger::Init(isolate, pckName, jsDebugger);
 
-	MetadataNode::BuildMetadata(filesPath);
+	// TODO: Pete: remove this hackery - we MAY or MAY NOT want to have access to native metadata in threads
+	if(jsDebugger != nullptr) {
+		MetadataNode::BuildMetadata(filesPath);
+	}
 
 	auto enableProfiler = !outputDir.empty();
 	MetadataNode::EnableProfiler(enableProfiler);

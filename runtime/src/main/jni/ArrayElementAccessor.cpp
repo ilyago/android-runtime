@@ -104,6 +104,7 @@ void ArrayElementAccessor::SetArrayElement(Isolate *isolate, const Local<Object>
 	JEnv env;
 
 	HandleScope handleScope(isolate);
+
 	auto runtime = Runtime::GetRuntime(isolate);
 	auto objectManager = runtime->GetObjectManager();
 
