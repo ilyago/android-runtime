@@ -676,6 +676,8 @@ void MetadataNode::SetStaticMembers(Isolate *isolate, Local<Function>& ctorFunct
 			callbackData->candidates.push_back(entry);
 		}
 
+		DEBUG_WRITE_FORCE("~~~~~~~~~~~~~ Traversing metadata node: %s", treeNode->name.c_str());
+
 		//attach .extend function
 		auto extendFuncName = V8StringConstants::GetExtend();
 		auto extendFuncTemplate = FunctionTemplate::New(isolate, ExtendCallMethodCallback, External::New(isolate, this));

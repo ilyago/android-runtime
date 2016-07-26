@@ -165,7 +165,9 @@ void Module::RequireCallbackImpl(const v8::FunctionCallbackInfo<v8::Value>& args
 	}
 
 	string moduleName = ConvertToString(args[0].As<String>());
+	DEBUG_WRITE_FORCE("ModuleName: %s", moduleName.c_str());
 	string callingModuleDirName = ConvertToString(args[1].As<String>());
+	DEBUG_WRITE_FORCE("CallingModuleDirName: %s", callingModuleDirName.c_str());
 	auto isData = false;
 
 	auto moduleObj = LoadImpl(isolate, moduleName, callingModuleDirName, isData);

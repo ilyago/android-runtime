@@ -134,12 +134,12 @@ void Runtime::Init(jstring filesPath, bool verboseLoggingEnabled, jstring packag
 	auto filesRoot = ArgConverter::jstringToString(filesPath);
 
 	// TODO: Pete: remove this hackery by passing valid filesRoot on new thread without the /app suffix
-	if(jsDebugger != nullptr) {
+//	if(jsDebugger != nullptr) {
 		Constants::APP_ROOT_FOLDER_PATH = filesRoot + "/app/";
-	} else {
-		filesRoot = filesRoot.substr(0, filesRoot.length() - 3);
-		Constants::APP_ROOT_FOLDER_PATH = filesRoot;
-	}
+//	} else {
+//		filesRoot = filesRoot.substr(0, filesRoot.length() - 3);
+//		Constants::APP_ROOT_FOLDER_PATH = filesRoot;
+//	}
 
 	Constants::PACKAGE_NAME = ArgConverter::jstringToString(packageName);
 	// read config options passed from Java
@@ -506,9 +506,9 @@ Isolate* Runtime::PrepareV8Runtime(const string& filesPath, jstring packageName,
 	JsDebugger::Init(isolate, pckName, jsDebugger);
 
 	// TODO: Pete: remove this hackery - we MAY or MAY NOT want to have access to native metadata in threads
-	if(jsDebugger != nullptr) {
+//	if(jsDebugger != nullptr) {
 		MetadataNode::BuildMetadata(filesPath);
-	}
+//	}
 
 	auto enableProfiler = !outputDir.empty();
 	MetadataNode::EnableProfiler(enableProfiler);

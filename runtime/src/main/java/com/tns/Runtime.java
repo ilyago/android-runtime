@@ -967,11 +967,10 @@ public class Runtime
 	}
 
 	public void runGivenScript (String filePath) {
-		Object result = runScript(getRuntimeId(), filePath);
+		runModule(new File(filePath));
 	}
 
 	public void simplisticInit() {
-
-		initNativeScript(getRuntimeId(), config.appDir.getAbsolutePath(), false, config.appName, new Object[]{"--expose-gc", false, "", "", ""}, null);
+		initNativeScript(getRuntimeId(), Module.getApplicationFilesPath(), false, config.appName, new Object[]{"--expose-gc", false, "", "", ""}, null);
 	}
 }

@@ -779,7 +779,7 @@ void CallbackHandlers::ExitMethodCallback(const v8::FunctionCallbackInfo<v8::Val
 }
 
 void CallbackHandlers::NewThreadCallback(const v8::FunctionCallbackInfo<v8::Value> &args) {
-    HandleScope handleScope(args.GetIsolate());
+//    HandleScope handleScope(args.GetIsolate());
     try {
         if (!args.IsConstructCall()) {
             throw NativeScriptException("Worker should be called with new keyword");

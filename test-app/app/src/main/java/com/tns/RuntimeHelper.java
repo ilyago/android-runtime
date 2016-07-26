@@ -250,7 +250,7 @@ public final class RuntimeHelper {
 
         runtime.simplisticInit();
         // TODO: Pete: RESOLVE FULL PATH to file on device
-        filePath = "/data/data/com.tns.android_runtime_testapp/files/app/myFile.js";
+//        filePath = "/data/data/com.tns.android_runtime_testapp/files/app/myFile.js";
         runtime.runGivenScript(filePath);
 //			runtime.runScript(new File(appDir, "internal/ts_helpers.js"));
 
