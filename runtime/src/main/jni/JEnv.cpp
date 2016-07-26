@@ -28,9 +28,16 @@ JEnv::JEnv()
 }
 
 JEnv::JEnv(JNIEnv *jniEnv)
-:
-		m_env(jniEnv)
 {
+	jint ret = s_jvm->GetEnv(reinterpret_cast<void**>(&jniEnv), JNI_VERSION_1_6);
+
+	if ((ret != JNI_OK) || (jniEnv != nullptr))
+	{
+		ret = s_jvm->AttachCurrentThread(&jniEnv, nullptr);
+		assert(ret == JNI_OK);
+		assert(jniEnv != nullptr);
+	}
+	m_env = jniEnv;
 }
 
 JEnv::~JEnv()

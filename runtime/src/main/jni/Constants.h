@@ -11,6 +11,7 @@ public:
 		const static char CLASS_NAME_LOCATION_SEPARATOR = '_';
 
 	static std::string APP_ROOT_FOLDER_PATH;
+	static std::string PACKAGE_NAME;
 	static std::string V8_STARTUP_FLAGS;
 	static std::string V8_HEAP_SNAPSHOT_SCRIPT;
 	static std::string V8_HEAP_SNAPSHOT_BLOB;

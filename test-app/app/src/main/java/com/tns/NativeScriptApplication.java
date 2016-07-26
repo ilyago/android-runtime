@@ -7,6 +7,7 @@ public class NativeScriptApplication extends android.app.Application {
     private static NativeScriptApplication thiz;
 
     public NativeScriptApplication() {
+        android.os.Debug.waitForDebugger();
         thiz = this;
     }
 

@@ -965,4 +965,13 @@ public class Runtime
 		boolean useGlobalRefs = android.os.Build.VERSION.SDK_INT >= JELLY_BEAN; 
 		return useGlobalRefs;
 	}
+
+	public void runGivenScript (String filePath) {
+		Object result = runScript(getRuntimeId(), filePath);
+	}
+
+	public void simplisticInit() {
+
+		initNativeScript(getRuntimeId(), config.appDir.getAbsolutePath(), false, config.appName, new Object[]{"--expose-gc", false, "", "", ""}, null);
+	}
 }

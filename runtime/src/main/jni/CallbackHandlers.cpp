@@ -22,6 +22,8 @@
 #include "SimpleProfiler.h"
 #include "Runtime.h"
 #include "include/v8.h"
+#include "Constants.h"
+#include "JniLocalRef.h"
 
 using namespace v8;
 using namespace std;
@@ -63,6 +65,14 @@ void CallbackHandlers::Init(Isolate *isolate, ObjectManager *objectManager) {
                                                                    "getChangeInBytesOfUsedMemory",
                                                                    "()J");
     assert(GET_CHANGE_IN_BYTES_OF_USED_MEMORY_METHOD_ID != nullptr);
+
+
+    //TODO: plamen5kov: fix ordering
+    RUNTIME_HELPER = env.FindClass("com/tns/RuntimeHelper");
+    assert(RUNTIME_HELPER != nullptr);
+
+    INIT_RUNTIME_ON_NEW_THREAD_ID = env.GetStaticMethodID(RUNTIME_HELPER, "initRuntimeOnNewThread", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
+    assert(INIT_RUNTIME_ON_NEW_THREAD_ID != nullptr);
 
     MetadataNode::Init(isolate);
 
@@ -764,6 +774,42 @@ void CallbackHandlers::ExitMethodCallback(const v8::FunctionCallbackInfo<v8::Val
     exit(-1);
 }
 
+void CallbackHandlers::NewThreadCallback(const v8::FunctionCallbackInfo<v8::Value> &args) {
+    try {
+        if (!args.IsConstructCall()) {
+            throw NativeScriptException("Worker should be called with new keyword");
+        }
+        if(args.Length() > 1 || !args[0]->IsString()) {
+            throw NativeScriptException("Worker should be called with one string parameter (name of file to load)");
+        }
+
+        DEBUG_WRITE("Called worker callback!");
+
+        JEnv env;
+        DEBUG_WRITE("APP_ROOT_FOLDER_PATH=%s", Constants::APP_ROOT_FOLDER_PATH.c_str());
+        DEBUG_WRITE("PACKAGE_NAME=%s", Constants::PACKAGE_NAME.c_str());
+
+        JniLocalRef appFolder(env.NewStringUTF(Constants::APP_ROOT_FOLDER_PATH.c_str()));
+        JniLocalRef appName(env.NewStringUTF(Constants::PACKAGE_NAME.c_str()));
+        JniLocalRef filePath(ConvertToJavaString(args[0]));
+
+        env.CallStaticVoidMethod(RUNTIME_HELPER, INIT_RUNTIME_ON_NEW_THREAD_ID, (jstring) appName, (jstring)appFolder, (jstring)filePath);
+
+    } catch (NativeScriptException &e) {
+        e.ReThrowToV8();
+    }
+    catch (std::exception e) {
+        stringstream ss;
+        ss << "Error: c++ exception: " << e.what() << endl;
+        NativeScriptException nsEx(ss.str());
+        nsEx.ReThrowToV8();
+    }
+    catch (...) {
+        NativeScriptException nsEx(std::string("Error: c++ exception!"));
+        nsEx.ReThrowToV8();
+    }
+}
+
 void CallbackHandlers::CreateGlobalCastFunctions(const Local<ObjectTemplate> &globalTemplate) {
     castFunctions.CreateGlobalCastFunctions(globalTemplate);
 }
@@ -882,6 +928,11 @@ int CallbackHandlers::GetArrayLength(Isolate *isolate, const Local<Object> &arr)
 
     return length;
 }
+
+
+//todo: plamen5kov: fix later
+jclass CallbackHandlers::RUNTIME_HELPER = nullptr;
+jmethodID CallbackHandlers::INIT_RUNTIME_ON_NEW_THREAD_ID = nullptr;
 
 jclass CallbackHandlers::RUNTIME_CLASS = nullptr;
 jclass CallbackHandlers::JAVA_LANG_STRING = nullptr;

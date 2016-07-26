@@ -64,6 +64,9 @@ namespace tns
 
 			static void ExitMethodCallback(const v8::FunctionCallbackInfo<v8::Value>& args);
 
+
+		static void NewThreadCallback(const v8::FunctionCallbackInfo<v8::Value>& args);
+
 			static void OverridesWeakCallback(v8::Isolate* isolate, v8::Persistent<v8::Object>* target, void* arg);
 
 			static v8::Local<v8::Object> GetImplementationObjectFromArg(const v8::FunctionCallbackInfo<v8::Value>& args);
@@ -97,9 +100,15 @@ namespace tns
 
 			static jclass RUNTIME_CLASS;
 
+
+			//TODO: plamen5kov: fix ordering
+			static jclass RUNTIME_HELPER;
+			static jmethodID INIT_RUNTIME_ON_NEW_THREAD_ID;
+
 			static jclass JAVA_LANG_STRING;
 
 			static jmethodID RESOLVE_CLASS_METHOD_ID;
+
 
 			static jfieldID CURRENT_OBJECTID_FIELD_ID;
 

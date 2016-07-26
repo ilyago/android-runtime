@@ -27,9 +27,13 @@
 #include <android/log.h>
 #include <string>
 
+
+
 using namespace v8;
 using namespace std;
 using namespace tns;
+
+#include "V8GlobalHelpers.h"
 
 //TODO: Lubo: properly release this jni global ref on shutdown
 
@@ -112,7 +116,11 @@ ObjectManager* Runtime::GetObjectManager() const
 
 void Runtime::Init(JNIEnv *_env, jobject obj, int runtimeId, jstring filesPath, jboolean verboseLoggingEnabled, jstring packageName, jobjectArray args, jobject jsDebugger)
 {
-	auto runtime = new Runtime(_env, obj, runtimeId);
+	JEnv env(_env);
+	stringstream ss;
+	ss << "Thread " << runtimeId << endl;
+
+	auto runtime = new Runtime(env, obj, runtimeId);
 
 	auto enableLog = verboseLoggingEnabled == JNI_TRUE;
 
@@ -125,6 +133,7 @@ void Runtime::Init(jstring filesPath, bool verboseLoggingEnabled, jstring packag
 
 	auto filesRoot = ArgConverter::jstringToString(filesPath);
 	Constants::APP_ROOT_FOLDER_PATH = filesRoot + "/app/";
+	Constants::PACKAGE_NAME = ArgConverter::jstringToString(packageName);
 	// read config options passed from Java
 	JniLocalRef v8Flags(m_env.GetObjectArrayElement(args, 0));
 	Constants::V8_STARTUP_FLAGS = ArgConverter::jstringToString(v8Flags);
@@ -451,6 +460,7 @@ Isolate* Runtime::PrepareV8Runtime(const string& filesPath, jstring packageName,
 	globalTemplate->Set(ConvertToV8String("__disableVerboseLogging"), FunctionTemplate::New(isolate, CallbackHandlers::DisableVerboseLoggingMethodCallback));
 	globalTemplate->Set(ConvertToV8String("__exit"), FunctionTemplate::New(isolate, CallbackHandlers::ExitMethodCallback));
 	globalTemplate->Set(ConvertToV8String("__runtimeVersion"), ConvertToV8String(NATIVE_SCRIPT_RUNTIME_VERSION), readOnlyFlags);
+	globalTemplate->Set(ConvertToV8String("Worker"), FunctionTemplate::New(isolate, CallbackHandlers::NewThreadCallback));
 
 	m_weakRef.Init(isolate, globalTemplate, m_objectManager);
 
