@@ -652,6 +652,8 @@ void MetadataNode::SetStaticMembers(Isolate *isolate, Local<Function>& ctorFunct
 			auto entry = s_metadataReader.ReadInstanceFieldEntry(&curPtr);
 		}
 
+		DEBUG_WRITE_FORCE("~~~~~~~~~~~~~ Traversing metadata node: %s", treeNode->name.c_str());
+
 		string lastMethodName;
 		MethodCallbackData *callbackData = nullptr;
 
@@ -670,13 +672,13 @@ void MetadataNode::SetStaticMembers(Isolate *isolate, Local<Function>& ctorFunct
 				auto funcTemplate = FunctionTemplate::New(isolate, MethodCallback, funcData);
 				auto func = funcTemplate->GetFunction();
 				auto funcName = ConvertToV8String(entry.name);
+
+				DEBUG_WRITE_FORCE("~~~~~~~~~~~~~~ attaching static function: %s to node", entry.name.c_str());
 				ctorFunction->Set(funcName, Wrap(isolate, func, entry.name, origin, false /* isCtorFunc */));
 				lastMethodName = entry.name;
 			}
 			callbackData->candidates.push_back(entry);
 		}
-
-		DEBUG_WRITE_FORCE("~~~~~~~~~~~~~ Traversing metadata node: %s", treeNode->name.c_str());
 
 		//attach .extend function
 		auto extendFuncName = V8StringConstants::GetExtend();
@@ -1316,7 +1318,8 @@ void MetadataNode::PackageGetterCallback(Local<Name> property, const PropertyCal
 
 			uint8_t nodeType = s_metadataReader.GetNodeType(node->m_treeNode);
 
-			DEBUG_WRITE("MetadataNode::GetterCallback: prop '%s' for node '%s' called, nodeType=%d, hash=%d", propName.c_str(), node->m_treeNode->name.c_str(), nodeType, thiz.IsEmpty() ? -42 : thiz->GetIdentityHash());
+			// TODO: Pete: remove _FORCE
+			DEBUG_WRITE_FORCE("MetadataNode::GetterCallback: prop '%s' for node '%s' called, nodeType=%d, hash=%d", propName.c_str(), node->m_treeNode->name.c_str(), nodeType, thiz.IsEmpty() ? -42 : thiz->GetIdentityHash());
 
 			auto child = GetChildMetadataForPackage(node, propName);
 			auto foundChild = child.treeNode != nullptr;

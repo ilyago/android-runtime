@@ -1,6 +1,13 @@
 //var a = Worker("asdasdasdasdasdasdas");
 
 //android.util.Log.v("~AJKSHDJKASHKJDHASJKDHASDJAS", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAASDJKLASDJKLQWUI(DJKLzx ")
+// var obj = java.lang.Object;//new java.lang.Object();
+
+obj = new java.lang.String("PESHOOO");
+
+//__printf(obj);
+
+android.util.Log.v("ASDASDASDA", obj);
 
 var i = 5;
 //while(true) {

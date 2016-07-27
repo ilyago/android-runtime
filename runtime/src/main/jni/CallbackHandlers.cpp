@@ -99,7 +99,8 @@ bool CallbackHandlers::RegisterInstance(Isolate *isolate, const Local<Object> &j
 
     int javaObjectID = objectManager->GenerateNewObjectID();
 
-    DEBUG_WRITE("RegisterInstance: Linking new instance");
+    // TODO: Pete: remove _Force
+    DEBUG_WRITE_FORCE("RegisterInstance: Linking new instance");
     objectManager->Link(jsObject, javaObjectID, nullptr);
 
     // resolve constructor

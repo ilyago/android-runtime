@@ -9,6 +9,12 @@ public final class LogcatLogger implements Logger
 
 	private boolean enabled;
 
+	// TODO: Pete: REMOVE
+	public LogcatLogger()
+	{
+		this.enabled = false;
+	}
+	
 	public LogcatLogger(Context context)
 	{
 		this.initLogging(context);

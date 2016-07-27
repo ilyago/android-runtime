@@ -970,7 +970,13 @@ public class Runtime
 		runModule(new File(filePath));
 	}
 
-	public void simplisticInit() {
+	public void simplisticInit(Logger loggera) {
+		this.logger = loggera;
 		initNativeScript(getRuntimeId(), Module.getApplicationFilesPath(), false, config.appName, new Object[]{"--expose-gc", false, "", "", ""}, null);
 	}
+	
+//	public static void ThrowThrowable(Throwable t) {
+//		t.printStackTrace();
+//		System.out.println(t.getMessage());
+//	}
 }

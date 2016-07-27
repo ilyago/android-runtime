@@ -153,7 +153,8 @@ public final class RuntimeHelper {
         Thread runtimeThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                Thread.currentThread().setName("Worker: \'" + filePath + "\'");
+                String name = "Worker-\'" + filePath + "\'";
+                Thread.currentThread().setName(name);
                 init(appName, appDir, filePath);
             }
         });
@@ -226,6 +227,7 @@ public final class RuntimeHelper {
 
 //			ThreadScheduler workThreadScheduler = new WorkThreadScheduler(new Handler(Looper.getMainLooper()));
 
+        Logger logger = new LogcatLogger();
         Configuration config = new Configuration(null, null, null, appName, null, null, new File(appDir), null, null, null, null);
         runtime = new Runtime(config);
 
@@ -248,7 +250,7 @@ public final class RuntimeHelper {
 //				}
 //			}
 
-        runtime.simplisticInit();
+        runtime.simplisticInit(logger);
         // TODO: Pete: RESOLVE FULL PATH to file on device
 //        filePath = "/data/data/com.tns.android_runtime_testapp/files/app/myFile.js";
         runtime.runGivenScript(filePath);

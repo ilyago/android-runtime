@@ -20,22 +20,24 @@ namespace tns
 	Local<String> V8StringConstants::GetExtend()
 	{
 		auto isolate = Isolate::GetCurrent();
-		if (EXTEND_PERSISTENT == nullptr)
-		{
+		// TODO: Pete: Find a way to make these constants persistent for each new thread
+//		if (EXTEND_PERSISTENT == nullptr)
+//		{
 			auto str = String::NewFromUtf8(isolate, EXTEND.c_str());
 			EXTEND_PERSISTENT = new Persistent<String>(Isolate::GetCurrent(), str);
-		}
+//		}
 		return Local<String>::New(isolate, *EXTEND_PERSISTENT);
 	}
 
 	Local<String> V8StringConstants::GetNullObject()
 	{
 		auto isolate = Isolate::GetCurrent();
-		if (NULL_OBJECT_PERSISTENT == nullptr)
-		{
+		// TODO: Pete: Find a way to make these constants persistent for each new thread
+//		if (NULL_OBJECT_PERSISTENT == nullptr)
+//		{
 			auto str = String::NewFromUtf8(isolate, NULL_OBJECT.c_str());
 			NULL_OBJECT_PERSISTENT = new Persistent<String>(Isolate::GetCurrent(), str);
-		}
+//		}
 		return Local<String>::New(isolate, *NULL_OBJECT_PERSISTENT);
 	}
 
