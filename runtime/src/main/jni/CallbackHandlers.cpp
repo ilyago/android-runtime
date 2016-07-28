@@ -780,7 +780,6 @@ void CallbackHandlers::ExitMethodCallback(const v8::FunctionCallbackInfo<v8::Val
 }
 
 void CallbackHandlers::NewThreadCallback(const v8::FunctionCallbackInfo<v8::Value> &args) {
-//    HandleScope handleScope(args.GetIsolate());
     try {
         if (!args.IsConstructCall()) {
             throw NativeScriptException("Worker should be called with new keyword");
@@ -789,6 +788,15 @@ void CallbackHandlers::NewThreadCallback(const v8::FunctionCallbackInfo<v8::Valu
             throw NativeScriptException(
                     "Worker should be called with one string parameter (name of file to load)");
         }
+
+        auto thiz = args.This();
+        auto isolate = thiz->GetIsolate();
+
+        auto onMessageFuncTemplate = FunctionTemplate::New(isolate, CallbackHandlers::WorkerOnMessageCallback);
+        thiz->Set(ConvertToV8String(std::string("onmessage")), onMessageFuncTemplate->GetFunction());
+
+        auto postMessageFuncTemplate = FunctionTemplate::New(isolate, CallbackHandlers::WorkerPostMessageCallback);
+        thiz->Set(ConvertToV8String(std::string("postMessage")), postMessageFuncTemplate->GetFunction());
 
         DEBUG_WRITE("Called worker callback!");
 
@@ -816,6 +824,14 @@ void CallbackHandlers::NewThreadCallback(const v8::FunctionCallbackInfo<v8::Valu
         NativeScriptException nsEx(std::string("Error: c++ exception!"));
         nsEx.ReThrowToV8();
     }
+}
+
+void CallbackHandlers::WorkerOnMessageCallback(const v8::FunctionCallbackInfo<v8::Value> &args) {
+    DEBUG_WRITE_FORCE("~~~~~~~~ Worker on message callback triggered!");
+}
+
+void CallbackHandlers::WorkerPostMessageCallback(const v8::FunctionCallbackInfo<v8::Value> &args) {
+    DEBUG_WRITE_FORCE("~~~~~~~~ Worker Post message callback triggered!");
 }
 
 void CallbackHandlers::CreateGlobalCastFunctions(const Local<ObjectTemplate> &globalTemplate) {

@@ -31,3 +31,12 @@ a = new Object();
 a = [123, "123123", {
     a: 5
 }];
+
+
+onmessage = function(msg) {
+    __printf("On message inside myFile.js");
+}
+
+postMessage("Hey, it's the worker talking!");
+
+//onmessage("aaaa"); // this will be manually called from within v8

@@ -49,6 +49,12 @@ namespace tns
 
 			static void PrintMeBabyOneMoreTime(const v8::FunctionCallbackInfo<v8::Value>& args);
 
+			static void WorkerThreadOnMessageFunctionGetterCallback(v8::Local<v8::String> property,const v8::PropertyCallbackInfo<v8::Value>& info);
+			static void WorkerThreadOnMessageFunctionSetterCallback(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::PropertyCallbackInfo<void>& info);
+			static void WorkerThreadOnMessageCallback(const v8::FunctionCallbackInfo<v8::Value> &args);
+			static void WorkerThreadOnErrorCallback(const v8::FunctionCallbackInfo<v8::Value> &args);
+			static void WorkerThreadPostMessageCallback(const v8::FunctionCallbackInfo<v8::Value> &args);
+
 			JEnv m_env;
 			int m_id;
 			jobject m_runtime;

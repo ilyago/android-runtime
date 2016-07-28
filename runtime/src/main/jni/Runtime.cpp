@@ -39,6 +39,9 @@ using namespace tns;
 //TODO: Lubo: properly release this jni global ref on shutdown
 
 Persistent<Context> *PrimaryContext = nullptr;
+
+Persistent<Function> *workerOnMessageFunc = nullptr;
+
 Context::Scope *context_scope = nullptr;
 bool tns::LogEnabled = true;
 SimpleAllocator g_allocator;
@@ -500,6 +503,19 @@ Isolate* Runtime::PrepareV8Runtime(const string& filesPath, jstring packageName,
 	globalTemplate->Set(ConvertToV8String("Worker"), FunctionTemplate::New(isolate, CallbackHandlers::NewThreadCallback));
 	globalTemplate->Set(ConvertToV8String("__printf"), FunctionTemplate::New(isolate, Runtime::PrintMeBabyOneMoreTime));
 
+	//// TODO: Pete: attach "onmessage" "postMessage" "onerror" to global context on consecutively created isolates (threads)
+	if(jsDebugger == nullptr) {
+//		auto onMsgFuncTemplate = FunctionTemplate::New(isolate, Runtime::WorkerThreadOnMessageCallback);
+//		auto onErrorFuncTemplate = FunctionTemplate::New(isolate, Runtime::WorkerThreadOnErrorCallback);
+		auto postMessageFuncTemplate = FunctionTemplate::New(isolate, Runtime::WorkerThreadPostMessageCallback);
+
+		globalTemplate->SetAccessor(ConvertToV8String("onmessage"), Runtime::WorkerThreadOnMessageFunctionGetterCallback, Runtime::WorkerThreadOnMessageFunctionSetterCallback);
+
+//		globalTemplate->Set(ConvertToV8String("onmessage"), onMsgFuncTemplate);
+//		globalTemplate->Set(ConvertToV8String("onerror"), onErrorFuncTemplate);
+		globalTemplate->Set(ConvertToV8String("postMessage"), postMessageFuncTemplate);
+	}
+
 	m_weakRef.Init(isolate, globalTemplate, m_objectManager);
 
 	SimpleProfiler::Init(isolate, globalTemplate);
@@ -544,6 +560,56 @@ Isolate* Runtime::PrepareV8Runtime(const string& filesPath, jstring packageName,
 	m_arrayBufferHelper.CreateConvertFunctions(isolate, global, m_objectManager);
 
 	return isolate;
+}
+
+void Runtime::WorkerThreadOnMessageFunctionGetterCallback(Local<String> property,const PropertyCallbackInfo<Value>& info) {
+	DEBUG_WRITE_FORCE("~~~~~~~~ Worker THREAD on message GETTER callback triggered!");
+
+	auto func = Local<Function>::New(info.GetIsolate(), *workerOnMessageFunc);
+	info.GetReturnValue().Set(func);
+}
+
+
+// TODO: Pete: onmessage inside workers will be set here
+void Runtime::WorkerThreadOnMessageFunctionSetterCallback(v8::Local<v8::String> property,  v8::Local<v8::Value> value, const PropertyCallbackInfo<void>& info) {
+	DEBUG_WRITE_FORCE("~~~~~~~~ Worker THREAD on message SETTER callback triggered!");
+
+	if(value->IsFunction()) {
+		v8::String::Utf8Value strv(property->ToString());
+		DEBUG_WRITE_FORCE("~~~~~~~~~~~~~~~~~~~~~ ITS A FUNCTION!!!!! %s", std::string(*strv).c_str());
+
+		auto thiz = info.This();
+		auto func = Handle<Function>::Cast(value);
+
+		workerOnMessageFunc = new Persistent<Function>(Isolate::GetCurrent(), func);
+		info.GetReturnValue().Set(func);
+	} else {
+		throw NativeScriptException(std::string("You should assign a function to the 'onmessage' callback."));
+	}
+}
+
+void Runtime::WorkerThreadOnMessageCallback(const v8::FunctionCallbackInfo<v8::Value> &args) {
+	DEBUG_WRITE_FORCE("~~~~~~~~ Worker THREAD on message callback triggered!");
+}
+
+void Runtime::WorkerThreadOnErrorCallback(const v8::FunctionCallbackInfo<v8::Value> &args) {
+	DEBUG_WRITE_FORCE("~~~~~~~~ Worker THREAD on error callback triggered!");
+}
+
+void Runtime::WorkerThreadPostMessageCallback(const v8::FunctionCallbackInfo<v8::Value> &args) {
+	DEBUG_WRITE_FORCE("~~~~~~~~ Worker THREAD post message callback triggered!");
+
+	auto isolate = args.GetIsolate();
+
+	HandleScope scope(isolate);
+	Local<String> msg = Local<String>::New(args.GetIsolate(), args[0]->ToString());
+
+	auto func = Local<Function>::New(args.GetIsolate(), *workerOnMessageFunc);
+
+	auto context = isolate->GetCurrentContext();
+	Local<Value> args1[] = { msg };
+
+	func->Call(context, v8::Undefined(isolate), 1, args1);
 }
 
 jobject Runtime::ConvertJsValueToJavaObject(JEnv& env, const Local<Value>& value, int classReturnType)
@@ -603,3 +669,4 @@ void Runtime::PrepareExtendFunction(Isolate *isolate, jstring filesPath)
 JavaVM* Runtime::s_jvm = nullptr;
 map<int, Runtime*> Runtime::s_id2RuntimeCache;
 map<Isolate*, Runtime*> Runtime::s_isolate2RuntimesCache;
+

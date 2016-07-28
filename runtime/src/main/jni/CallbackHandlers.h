@@ -65,7 +65,12 @@ namespace tns
 			static void ExitMethodCallback(const v8::FunctionCallbackInfo<v8::Value>& args);
 
 
-		static void NewThreadCallback(const v8::FunctionCallbackInfo<v8::Value>& args);
+			static void NewThreadCallback(const v8::FunctionCallbackInfo<v8::Value>& args);
+
+			static void WorkerOnMessageCallback(const v8::FunctionCallbackInfo<v8::Value> &args);
+
+			static void WorkerPostMessageCallback(const v8::FunctionCallbackInfo<v8::Value> &args);
+
 
 			static void OverridesWeakCallback(v8::Isolate* isolate, v8::Persistent<v8::Object>* target, void* arg);
 

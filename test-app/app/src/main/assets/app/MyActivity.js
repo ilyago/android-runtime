@@ -37,7 +37,13 @@ var MyActivity = (function (_super) {
 //        var a = new Worker(); //not not one parameter\
 
         var a = new Worker("./myFile.js");
+
+//        a.postMessage("I POST A MESSAGE TO THE WORKER!");
 //
+//        a.onmessage = function(msg) {
+//            android.util.Log.d("TNS.JAVASCRIPT.LOG", "I RECEIVED A MESSAGE FROM THE WORKER!");
+//        }
+////
 //    	var layout = new android.widget.LinearLayout(this);
 //    	layout.setOrientation(1);
 //    	this.setContentView(layout);
