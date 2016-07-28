@@ -33,10 +33,10 @@ a = [123, "123123", {
 }];
 
 
-onmessage = function(msg) {
-    __printf("On message inside myFile.js");
-}
-
-postMessage("Hey, it's the worker talking!");
+//onmessage = function(msg) {
+//    __printf("On message inside myFile.js");
+//}
+//
+//postMessage("Hey, it's the worker talking!");
 
 //onmessage("aaaa"); // this will be manually called from within v8

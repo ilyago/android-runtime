@@ -29,6 +29,8 @@ using namespace v8;
 using namespace std;
 using namespace tns;
 
+Persistent<Function> *workerOnMessageFunc = nullptr;
+
 void CallbackHandlers::Init(Isolate *isolate, ObjectManager *objectManager) {
     JEnv env;
 
@@ -792,11 +794,10 @@ void CallbackHandlers::NewThreadCallback(const v8::FunctionCallbackInfo<v8::Valu
         auto thiz = args.This();
         auto isolate = thiz->GetIsolate();
 
-        auto onMessageFuncTemplate = FunctionTemplate::New(isolate, CallbackHandlers::WorkerOnMessageCallback);
-        thiz->Set(ConvertToV8String(std::string("onmessage")), onMessageFuncTemplate->GetFunction());
+        thiz->SetAccessor(ConvertToV8String("onmessage"), CallbackHandlers::WorkerOnMessageFunctionGetterCallback, CallbackHandlers::WorkerOnMessageFunctionSetterCallback);
 
         auto postMessageFuncTemplate = FunctionTemplate::New(isolate, CallbackHandlers::WorkerPostMessageCallback);
-        thiz->Set(ConvertToV8String(std::string("postMessage")), postMessageFuncTemplate->GetFunction());
+        thiz->Set(ConvertToV8String("postMessage"), postMessageFuncTemplate->GetFunction());
 
         DEBUG_WRITE("Called worker callback!");
 
@@ -826,8 +827,27 @@ void CallbackHandlers::NewThreadCallback(const v8::FunctionCallbackInfo<v8::Valu
     }
 }
 
-void CallbackHandlers::WorkerOnMessageCallback(const v8::FunctionCallbackInfo<v8::Value> &args) {
-    DEBUG_WRITE_FORCE("~~~~~~~~ Worker on message callback triggered!");
+void CallbackHandlers::WorkerOnMessageFunctionGetterCallback(Local<String> property,const PropertyCallbackInfo<Value>& info) {
+    DEBUG_WRITE_FORCE("~~~~~~~~ Worker on message function getter callback triggered!");
+
+    auto func = Local<Function>::New(info.GetIsolate(), *workerOnMessageFunc);
+    info.GetReturnValue().Set(func);
+}
+
+void CallbackHandlers::WorkerOnMessageFunctionSetterCallback(Local<String> property, Local<Value> value, const PropertyCallbackInfo<void>& info) {
+    DEBUG_WRITE_FORCE("~~~~~~~~ Worker on message function setter callback triggered!");
+
+    if(value->IsFunction()) {
+        v8::String::Utf8Value strv(property->ToString());
+
+        auto thiz = info.This();
+        auto func = Handle<Function>::Cast(value);
+
+        workerOnMessageFunc = new Persistent<Function>(Isolate::GetCurrent(), func);
+        info.GetReturnValue().Set(func);
+    } else {
+        throw NativeScriptException(std::string("You should assign a function to the worker object's 'onmessage' callback."));
+    }
 }
 
 void CallbackHandlers::WorkerPostMessageCallback(const v8::FunctionCallbackInfo<v8::Value> &args) {

@@ -40,9 +40,11 @@ var MyActivity = (function (_super) {
 
 //        a.postMessage("I POST A MESSAGE TO THE WORKER!");
 //
-//        a.onmessage = function(msg) {
-//            android.util.Log.d("TNS.JAVASCRIPT.LOG", "I RECEIVED A MESSAGE FROM THE WORKER!");
-//        }
+        a.onmessage = function(msg) {
+            android.util.Log.d("TNS.JAVASCRIPT.LOG", "I RECEIVED A MESSAGE FROM THE WORKER!");
+        }
+
+        a.onmessage("asdasdasd");
 ////
 //    	var layout = new android.widget.LinearLayout(this);
 //    	layout.setOrientation(1);

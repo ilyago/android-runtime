@@ -40,7 +40,7 @@ using namespace tns;
 
 Persistent<Context> *PrimaryContext = nullptr;
 
-Persistent<Function> *workerOnMessageFunc = nullptr;
+Persistent<Function> *workerThreadOnMessageFunc = nullptr;
 
 Context::Scope *context_scope = nullptr;
 bool tns::LogEnabled = true;
@@ -565,7 +565,7 @@ Isolate* Runtime::PrepareV8Runtime(const string& filesPath, jstring packageName,
 void Runtime::WorkerThreadOnMessageFunctionGetterCallback(Local<String> property,const PropertyCallbackInfo<Value>& info) {
 	DEBUG_WRITE_FORCE("~~~~~~~~ Worker THREAD on message GETTER callback triggered!");
 
-	auto func = Local<Function>::New(info.GetIsolate(), *workerOnMessageFunc);
+	auto func = Local<Function>::New(info.GetIsolate(), *workerThreadOnMessageFunc);
 	info.GetReturnValue().Set(func);
 }
 
@@ -581,7 +581,7 @@ void Runtime::WorkerThreadOnMessageFunctionSetterCallback(v8::Local<v8::String> 
 		auto thiz = info.This();
 		auto func = Handle<Function>::Cast(value);
 
-		workerOnMessageFunc = new Persistent<Function>(Isolate::GetCurrent(), func);
+		workerThreadOnMessageFunc = new Persistent<Function>(Isolate::GetCurrent(), func);
 		info.GetReturnValue().Set(func);
 	} else {
 		throw NativeScriptException(std::string("You should assign a function to the 'onmessage' callback."));
@@ -604,7 +604,7 @@ void Runtime::WorkerThreadPostMessageCallback(const v8::FunctionCallbackInfo<v8:
 	HandleScope scope(isolate);
 	Local<String> msg = Local<String>::New(args.GetIsolate(), args[0]->ToString());
 
-	auto func = Local<Function>::New(args.GetIsolate(), *workerOnMessageFunc);
+	auto func = Local<Function>::New(args.GetIsolate(), *workerThreadOnMessageFunc);
 
 	auto context = isolate->GetCurrentContext();
 	Local<Value> args1[] = { msg };
