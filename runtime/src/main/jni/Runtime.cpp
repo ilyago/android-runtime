@@ -270,9 +270,6 @@ void Runtime::CreateJSInstanceNative(JNIEnv *_env, jobject obj, jobject javaObje
 
 	JEnv env(_env);
 
-	// TODO: Do we need a TryCatch here? It is currently not used anywhere
-	TryCatch tc;
-
 	string existingClassName = ArgConverter::jstringToString(className);
 	string jniName = Util::ConvertFromCanonicalToJniName(existingClassName);
 	Local<Object> jsInstance;
@@ -281,12 +278,13 @@ void Runtime::CreateJSInstanceNative(JNIEnv *_env, jobject obj, jobject javaObje
 	auto proxyClassName = m_objectManager->GetClassName(javaObject);
 	DEBUG_WRITE("createJSInstanceNative class %s", proxyClassName.c_str());
 	jsInstance = MetadataNode::CreateExtendedJSWrapper(isolate, m_objectManager, proxyClassName);
+
 	if (jsInstance.IsEmpty())
 	{
-		throw NativeScriptException(string("NativeScript application not initialized correctly. Cannot create extended JS wrapper."));
+		throw NativeScriptException(string("Failed to create JavaScript extend wrapper for class '" + proxyClassName + "'"));
 	}
 
-	implementationObject = MetadataNode::GetImplementationObject(jsInstance);
+	implementationObject = MetadataNode::GetImplementationObject(isolate, jsInstance);
 	if (implementationObject.IsEmpty())
 	{
 		string msg("createJSInstanceNative: implementationObject is empty");
@@ -433,7 +431,7 @@ Isolate* Runtime::PrepareV8Runtime(const string& filesPath, jstring packageName,
 		else
 		{
 			// This should be executed before V8::Initialize, which calls it with false.
-			NativeScriptExtension::Probe(true);
+			NativeScriptExtension::CpuFeaturesProbe(true);
 			InitializeV8();
 			didInitializeV8 = true;
 
@@ -483,6 +481,7 @@ Isolate* Runtime::PrepareV8Runtime(const string& filesPath, jstring packageName,
 	Isolate::Scope isolate_scope(isolate);
 	HandleScope handleScope(isolate);
 
+	m_objectManager->SetInstanceIsolate(isolate);
 	V8::SetFlagsFromString(Constants::V8_STARTUP_FLAGS.c_str(), Constants::V8_STARTUP_FLAGS.size());
 	V8::SetCaptureStackTraceForUncaughtExceptions(true, 100, StackTrace::kOverview);
 	V8::AddMessageListener(NativeScriptException::OnUncaughtError);

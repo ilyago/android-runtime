@@ -56,6 +56,8 @@ namespace tns
 				END
 			};
 
+			void SetInstanceIsolate(v8::Isolate *isolate);
+
 		private:
 
 			struct JSInstanceInfo
@@ -150,7 +152,7 @@ namespace tns
 
 			v8::Local<v8::Object> CreateJSWrapperHelper(jint javaObjectID, const std::string& typeName, jclass clazz);
 
-			static void JSObjectWeakCallbackStatic(const v8::WeakCallbackData<v8::Object, ObjectWeakCallbackState>& data);
+			static void JSObjectWeakCallbackStatic(const v8::WeakCallbackInfo<ObjectWeakCallbackState>& data);
 
 			void JSObjectWeakCallback(v8::Isolate *isolate, ObjectWeakCallbackState *callbackState);
 
@@ -181,6 +183,8 @@ namespace tns
 			int m_numberOfGC;
 
 			JEnv m_env;
+
+			v8::Isolate *m_isolate;
 
 			std::stack<GarbageCollectionInfo> m_markedForGC;
 
