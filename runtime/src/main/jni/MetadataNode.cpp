@@ -1371,7 +1371,7 @@ void MetadataNode::PackageGetterCallback(Local<Name> property, const PropertyCal
 
 bool MetadataNode::ValidateExtendArguments(const FunctionCallbackInfo<Value>& info, string& extendLocation, v8::Local<v8::String>& extendName, Local<Object>& implementationObject)
 {
-	bool extendLocationFound = GetExtendLocation(extendLocation);
+	bool extendLocationFound = GetExtendLocation(info.GetIsolate(), extendLocation);
 
 	if (info.Length() == 1)
 	{
@@ -1626,10 +1626,10 @@ bool MetadataNode::IsValidExtendName(const Local<String>& name)
 	return true;
 }
 
-bool MetadataNode::GetExtendLocation(string& extendLocation)
+bool MetadataNode::GetExtendLocation(Isolate *isolate, string& extendLocation)
 {
 	stringstream extendLocationStream;
-	auto stackTrace = StackTrace::CurrentStackTrace(Isolate::GetCurrent(), 1, StackTrace::kOverview);
+	auto stackTrace = StackTrace::CurrentStackTrace(isolate, 1, StackTrace::kOverview);
 	if (!stackTrace.IsEmpty())
 	{
 		auto frame = stackTrace->GetFrame(0);

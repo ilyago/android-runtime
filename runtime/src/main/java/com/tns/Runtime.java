@@ -109,6 +109,7 @@ public class Runtime
 			{
 				throw new NativeScriptException("There is an existing runtime on this thread with id=" + existingRuntime.getRuntimeId());
 			}
+
 			this.runtimeId = nextRuntimeId++;
 			this.config = config;
 			classResolver = new ClassResolver(this);
@@ -970,8 +971,9 @@ public class Runtime
 		runModule(new File(filePath));
 	}
 
-	public void simplisticInit(Logger loggera) {
-		this.logger = loggera;
+	public void simplisticInit(Logger logger, DexFactory dexFactory) {
+		this.logger = logger;
+		this.dexFactory = dexFactory;
 		initNativeScript(getRuntimeId(), Module.getApplicationFilesPath(), false, config.appName, new Object[]{"--expose-gc", false, "", "", ""}, null);
 	}
 	

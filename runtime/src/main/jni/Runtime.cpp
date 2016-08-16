@@ -305,7 +305,7 @@ jint Runtime::GenerateNewObjectId(JNIEnv *env, jobject obj)
 
 void Runtime::AdjustAmountOfExternalAllocatedMemoryNative(JNIEnv *env, jobject obj, jlong usedMemory)
 {
-	Isolate::GetCurrent()->AdjustAmountOfExternalAllocatedMemory(usedMemory);
+	m_isolate->AdjustAmountOfExternalAllocatedMemory(usedMemory);
 }
 
 void Runtime::PassUncaughtExceptionToJsNative(JNIEnv *env, jobject obj, jthrowable exception, jstring stackTrace)
@@ -572,14 +572,11 @@ void Runtime::WorkerThreadOnMessageFunctionSetterCallback(v8::Local<v8::String> 
 	DEBUG_WRITE_FORCE("~~~~~~~~ Worker THREAD on message SETTER callback triggered!");
 
 	if(value->IsFunction()) {
-		v8::String::Utf8Value strv(property->ToString());
-		DEBUG_WRITE_FORCE("~~~~~~~~~~~~~~~~~~~~~ ITS A FUNCTION!!!!! %s", std::string(*strv).c_str());
-
 		auto thiz = info.This();
 		auto func = Handle<Function>::Cast(value);
 
 		// TODO: Pete: temporary patching
-		workerThreadOnMessageFunc = new Persistent<Function>(Isolate::GetCurrent(), func);
+		workerThreadOnMessageFunc = new Persistent<Function>(info.GetIsolate(), func);
 		info.GetReturnValue().Set(func);
 	} else {
 		throw NativeScriptException(std::string("You should assign a function to the 'onmessage' callback."));

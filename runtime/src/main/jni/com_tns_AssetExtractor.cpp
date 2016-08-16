@@ -16,10 +16,6 @@ extern "C" void Java_com_tns_AssetExtractor_extractAssets(JNIEnv *env, jobject o
 	{
 		AssetExtractor::ExtractAssets(env, obj, apk, inputDir, outputDir, _forceOverwrite);
 	}
-	catch (NativeScriptException& e)
-	{
-		e.ReThrowToJava();
-	}
 	catch (std::exception e) {
 		stringstream ss;
 		ss << "Error: c++ exception: " << e.what() << endl;

@@ -12,6 +12,9 @@ import android.util.Log;
 import java.io.IOException;
 
 public final class RuntimeHelper {
+    private static String s_dexThumb;
+    private static Application s_app;
+
     private RuntimeHelper() {
     }
 
@@ -37,6 +40,8 @@ public final class RuntimeHelper {
     }
 
     public static Runtime initRuntime(Application app) {
+        s_app = app;
+
         if (Runtime.isInitialized()) {
             return Runtime.getCurrentRuntime();
         }
@@ -100,6 +105,7 @@ public final class RuntimeHelper {
             File dexDir = new File(rootDir, "code_cache/secondary-dexes");
             String dexThumb = null;
             try {
+                s_dexThumb = Util.getDexThumb(app);
                 dexThumb = Util.getDexThumb(app);
             } catch (NameNotFoundException e) {
                 if (logger.isEnabled())
@@ -171,13 +177,20 @@ public final class RuntimeHelper {
 
         Object[] v8Config = new Object[1];//V8Config.fromPackageJSON(appDir);
 
-        String dexThumb = null;
+        String dexThumb = s_dexThumb;
+
+        File rootDir = new File(appDir, "../..");
+        File dexDir = new File(rootDir, "code_cache/secondary-dexes");
+
+        ClassLoader classLoader = s_app.getClassLoader();
 
         Logger logger = new LogcatLogger();
         Configuration config = new Configuration(null, null, null, appName, null, null, new File(appDir), null, null, null, null);
         runtime = new Runtime(config);
 
-        runtime.simplisticInit(logger);
+        DexFactory dexFactory = new DexFactory(logger, classLoader, dexDir, dexThumb);
+
+        runtime.simplisticInit(logger, dexFactory);
 
         // TODO: Pete: RESOLVE FULL PATH to file on device
 //        filePath = "/data/data/com.tns.android_runtime_testapp/files/app/myFile.js";

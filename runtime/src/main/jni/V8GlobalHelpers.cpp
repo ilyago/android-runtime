@@ -1,6 +1,7 @@
 #include "V8GlobalHelpers.h"
 #include "JEnv.h"
 #include "NativeScriptException.h"
+#include "include/v8.h"
 #include <sstream>
 
 using namespace v8;

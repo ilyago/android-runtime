@@ -12,7 +12,7 @@ using namespace v8;
 
 NativeScriptException::NativeScriptException(JEnv& env)
 :
-		m_javascriptException(nullptr)
+		m_javascriptException(nullptr), m_isolate(Isolate::GetCurrent())
 {
 	m_javaException = JniLocalRef(env.ExceptionOccurred());
 	env.ExceptionClear();
@@ -20,15 +20,15 @@ NativeScriptException::NativeScriptException(JEnv& env)
 
 NativeScriptException::NativeScriptException(const string& message)
 :
-		m_javascriptException(nullptr), m_javaException(JniLocalRef()), m_message(message)
+		m_javascriptException(nullptr), m_javaException(JniLocalRef()), m_message(message), m_isolate(Isolate::GetCurrent())
 {
 }
 
 NativeScriptException::NativeScriptException(TryCatch& tc, const string& message)
 :
-		m_javaException(JniLocalRef())
+		m_javaException(JniLocalRef()), m_isolate(Isolate::GetCurrent())
 {
-	auto isolate = Isolate::GetCurrent();
+	auto isolate = m_isolate;
 	m_javascriptException = new Persistent<Value>(isolate, tc.Exception());
 	bool isMessageEmpty = tc.Message().IsEmpty();
 	bool isExceptionEmpty = tc.Exception().IsEmpty();
@@ -38,7 +38,7 @@ NativeScriptException::NativeScriptException(TryCatch& tc, const string& message
 
 void NativeScriptException::ReThrowToV8()
 {
-	auto isolate = Isolate::GetCurrent();
+	auto isolate = m_isolate;
 	Local<Value> errObj;
 
 	if (m_javascriptException != nullptr)
@@ -90,11 +90,11 @@ void NativeScriptException::ReThrowToJava()
 		 * the JavaScript callstack as a message.
 		 * Otherwise create we have to create new exception object.
 		 */
-		auto isolate = Isolate::GetCurrent();
+		auto isolate = m_isolate;
 		auto errObj = Local<Value>::New(isolate, *m_javascriptException);
 		if (errObj->IsObject())
 		{
-			auto exObj = TryGetJavaThrowableObject(env, errObj.As<Object>());
+			auto exObj = TryGetJavaThrowableObject(isolate, env, errObj.As<Object>());
 			ex = (jthrowable) exObj.Move();
 		}
 
@@ -198,7 +198,7 @@ Local<Value> NativeScriptException::WrapJavaToJsException()
 	Local<Value> errObj;
 
 	JEnv env;
-	auto isolate = Isolate::GetCurrent();
+	auto isolate = m_isolate;
 
 	string excClassName = objectManager->GetClassName((jobject) m_javaException);
 	if (excClassName == "com/tns/NativeScriptException")
@@ -233,7 +233,7 @@ Local<Value> NativeScriptException::GetJavaExceptionFromEnv(const JniLocalRef& e
 	auto errMsg = GetExceptionMessage(env, exc);
 	DEBUG_WRITE("Error during java interop errorMessage %s", errMsg.c_str());
 
-	auto isolate = Isolate::GetCurrent();
+	auto isolate = m_isolate;
 
 	auto msg = ConvertToV8String(isolate, errMsg);
 	auto errObj = Exception::Error(msg).As<Object>();
@@ -278,7 +278,7 @@ string NativeScriptException::GetFullMessage(const TryCatch& tc, bool isExceptio
 	return loggedMessage;
 }
 
-JniLocalRef NativeScriptException::TryGetJavaThrowableObject(JEnv& env, const Local<Object>& jsObj)
+JniLocalRef NativeScriptException::TryGetJavaThrowableObject(Isolate *isolate, JEnv& env, const Local<Object>& jsObj)
 {
 	JniLocalRef javaThrowableObject;
 
@@ -291,7 +291,6 @@ JniLocalRef NativeScriptException::TryGetJavaThrowableObject(JEnv& env, const Lo
 	}
 	else
 	{
-		auto isolate = jsObj->GetIsolate();
 		auto nativeEx = jsObj->Get(V8StringConstants::GetNativeException(isolate));
 		if (!nativeEx.IsEmpty() && nativeEx->IsObject())
 		{

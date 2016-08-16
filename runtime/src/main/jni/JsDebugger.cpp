@@ -274,6 +274,7 @@ void JsDebugger::MyMessageHandler(const v8::Debug::Message& message)
 }
 
 bool JsDebugger::enabled = false;
+// TODO: Pete: static isolate instance should not be used when dealing with multiple threads
 v8::Isolate* JsDebugger::s_isolate = nullptr;
 jobject JsDebugger::s_jsDebugger = nullptr;
 string JsDebugger::s_packageName = "";

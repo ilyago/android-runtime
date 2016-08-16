@@ -5,6 +5,7 @@
 #include "JEnv.h"
 #include "JniLocalRef.h"
 #include "ObjectManager.h"
+#include "include/v8.h"
 
 namespace tns
 {
@@ -23,7 +24,7 @@ namespace tns
 			static void CallJsFuncWithErr(v8::Local<v8::Value> errObj);
 
 		private:
-			JniLocalRef TryGetJavaThrowableObject(JEnv& env, const v8::Local<v8::Object>& jsObj);
+			JniLocalRef TryGetJavaThrowableObject(v8::Isolate *isolate, JEnv& env, const v8::Local<v8::Object>& jsObj);
 			std::string GetExceptionMessage(JEnv& env, jthrowable exception);
 			v8::Local<v8::Value> WrapJavaToJsException();
 			v8::Local<v8::Value> GetJavaExceptionFromEnv(const JniLocalRef& exc, JEnv& env);
@@ -35,6 +36,7 @@ namespace tns
 
 			v8::Persistent<v8::Value> *m_javascriptException;
 			JniLocalRef m_javaException;
+			v8::Isolate *m_isolate;
 			std::string m_message;
 
 			static ObjectManager *objectManager;
