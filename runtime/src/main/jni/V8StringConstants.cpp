@@ -6,203 +6,203 @@ using namespace std;
 
 namespace tns
 {
-	Local<String> V8StringConstants::GetClassImplementationObject()
+	Local<String> V8StringConstants::GetClassImplementationObject(Isolate *isolate)
 	{
-		auto isolate = Isolate::GetCurrent();
 		if (CLASS_IMPLEMENTATION_OBJECT_PERSISTENT == nullptr)
 		{
 			auto str = String::NewFromUtf8(isolate, CLASS_IMPLEMENTATION_OBJECT.c_str());
-			CLASS_IMPLEMENTATION_OBJECT_PERSISTENT = new Persistent<String>(Isolate::GetCurrent(), str);
+			CLASS_IMPLEMENTATION_OBJECT_PERSISTENT = new Persistent<String>(isolate, str);
 		}
+
 		return Local<String>::New(isolate, *CLASS_IMPLEMENTATION_OBJECT_PERSISTENT);
 	}
 
-	Local<String> V8StringConstants::GetExtend()
+	Local<String> V8StringConstants::GetExtend(Isolate *isolate)
 	{
-		auto isolate = Isolate::GetCurrent();
 		// TODO: Pete: Find a way to make these constants persistent for each new thread
 //		if (EXTEND_PERSISTENT == nullptr)
 //		{
 			auto str = String::NewFromUtf8(isolate, EXTEND.c_str());
-			EXTEND_PERSISTENT = new Persistent<String>(Isolate::GetCurrent(), str);
+			EXTEND_PERSISTENT = new Persistent<String>(isolate, str);
 //		}
+
 		return Local<String>::New(isolate, *EXTEND_PERSISTENT);
 	}
 
-	Local<String> V8StringConstants::GetNullObject()
+	Local<String> V8StringConstants::GetNullObject(Isolate *isolate)
 	{
-		auto isolate = Isolate::GetCurrent();
 		// TODO: Pete: Find a way to make these constants persistent for each new thread
 //		if (NULL_OBJECT_PERSISTENT == nullptr)
 //		{
 			auto str = String::NewFromUtf8(isolate, NULL_OBJECT.c_str());
-			NULL_OBJECT_PERSISTENT = new Persistent<String>(Isolate::GetCurrent(), str);
+			NULL_OBJECT_PERSISTENT = new Persistent<String>(isolate, str);
 //		}
+
 		return Local<String>::New(isolate, *NULL_OBJECT_PERSISTENT);
 	}
 
-	Local<String> V8StringConstants::GetNullNodeName()
+	Local<String> V8StringConstants::GetNullNodeName(Isolate *isolate)
 	{
-		auto isolate = Isolate::GetCurrent();
 		if (NULL_NODE_NAME_PERSISTENT == nullptr)
 		{
 			auto str = String::NewFromUtf8(isolate, NULL_NODE_NAME.c_str());
-			NULL_NODE_NAME_PERSISTENT = new Persistent<String>(Isolate::GetCurrent(), str);
+			NULL_NODE_NAME_PERSISTENT = new Persistent<String>(isolate, str);
 		}
+
 		return Local<String>::New(isolate, *NULL_NODE_NAME_PERSISTENT);
 	}
 
-	Local<String> V8StringConstants::GetIsPrototypeImplementationObject()
+	Local<String> V8StringConstants::GetIsPrototypeImplementationObject(Isolate *isolate)
 	{
-		auto isolate = Isolate::GetCurrent();
 		if (IS_PROTOTYPE_IMPLEMENTATION_OBJECT_PERSISTENT == nullptr)
 		{
 			auto str = String::NewFromUtf8(isolate, IS_PROTOTYPE_IMPLEMENTATION_OBJECT.c_str());
-			IS_PROTOTYPE_IMPLEMENTATION_OBJECT_PERSISTENT = new Persistent<String>(Isolate::GetCurrent(), str);
+			IS_PROTOTYPE_IMPLEMENTATION_OBJECT_PERSISTENT = new Persistent<String>(isolate, str);
 		}
+
 		return Local<String>::New(isolate, *IS_PROTOTYPE_IMPLEMENTATION_OBJECT_PERSISTENT);
 	}
 
-	Local<String> V8StringConstants::GetNativeException()
+	Local<String> V8StringConstants::GetNativeException(Isolate *isolate)
 	{
-		auto isolate = Isolate::GetCurrent();
 		if (NATIVE_EXCEPTION_PERSISTENT == nullptr)
 		{
 			auto str = String::NewFromUtf8(isolate, NATIVE_EXCEPTION.c_str());
-			NATIVE_EXCEPTION_PERSISTENT = new Persistent<String>(Isolate::GetCurrent(), str);
+			NATIVE_EXCEPTION_PERSISTENT = new Persistent<String>(isolate, str);
 		}
+
 		return Local<String>::New(isolate, *NATIVE_EXCEPTION_PERSISTENT);
 	}
 
-	Local<String> V8StringConstants::GetStackTrace()
+	Local<String> V8StringConstants::GetStackTrace(Isolate *isolate)
 	{
-		auto isolate = Isolate::GetCurrent();
 		if (STACK_TRACE_PERSISTENT == nullptr)
 		{
 			auto str = String::NewFromUtf8(isolate, STACK_TRACE.c_str());
-			STACK_TRACE_PERSISTENT = new Persistent<String>(Isolate::GetCurrent(), str);
+			STACK_TRACE_PERSISTENT = new Persistent<String>(isolate, str);
 		}
+
 		return Local<String>::New(isolate, *STACK_TRACE_PERSISTENT);
 	}
 
-	Local<String> V8StringConstants::GetLongNumber()
+	Local<String> V8StringConstants::GetLongNumber(Isolate *isolate)
 	{
-		auto isolate = Isolate::GetCurrent();
 		if (LONG_NUMBER_PERSISTENT == nullptr)
 		{
 			auto str = String::NewFromUtf8(isolate, LONG_NUMBER.c_str());
-			LONG_NUMBER_PERSISTENT = new Persistent<String>(Isolate::GetCurrent(), str);
+			LONG_NUMBER_PERSISTENT = new Persistent<String>(isolate, str);
 		}
+
 		return Local<String>::New(isolate, *LONG_NUMBER_PERSISTENT);
 	}
 
-	Local<String> V8StringConstants::GetPrototype()
+	Local<String> V8StringConstants::GetPrototype(Isolate *isolate)
 	{
-		auto isolate = Isolate::GetCurrent();
 		if (PROTOTYPE_PERSISTENT == nullptr)
 		{
 			auto str = String::NewFromUtf8(isolate, PROTOTYPE.c_str());
-			PROTOTYPE_PERSISTENT = new Persistent<String>(Isolate::GetCurrent(), str);
+			PROTOTYPE_PERSISTENT = new Persistent<String>(isolate, str);
 		}
+
 		return Local<String>::New(isolate, *PROTOTYPE_PERSISTENT);
 	}
 
-	Local<String> V8StringConstants::GetSuper()
+	Local<String> V8StringConstants::GetSuper(Isolate *isolate)
 	{
-		auto isolate = Isolate::GetCurrent();
 		if (SUPER_PERSISTENT == nullptr)
 		{
 			auto str = String::NewFromUtf8(isolate, SUPER.c_str());
-			SUPER_PERSISTENT = new Persistent<String>(Isolate::GetCurrent(), str);
+			SUPER_PERSISTENT = new Persistent<String>(isolate, str);
 		}
+
 		return Local<String>::New(isolate, *SUPER_PERSISTENT);
 	}
 
-	Local<String> V8StringConstants::GetTSuper()
+	Local<String> V8StringConstants::GetTSuper(Isolate *isolate)
 	{
-		auto isolate = Isolate::GetCurrent();
 		if (T_SUPER_PERSISTENT == nullptr)
 		{
 			auto str = String::NewFromUtf8(isolate, T_SUPER.c_str());
-			T_SUPER_PERSISTENT = new Persistent<String>(Isolate::GetCurrent(), str);
+			T_SUPER_PERSISTENT = new Persistent<String>(isolate, str);
 		}
+
 		return Local<String>::New(isolate, *T_SUPER_PERSISTENT);
 	}
 
-	Local<String> V8StringConstants::GetTarget()
+	Local<String> V8StringConstants::GetTarget(Isolate *isolate)
 	{
-		auto isolate = Isolate::GetCurrent();
 		if (TARGET_PERSISTENT == nullptr)
 		{
 			auto str = String::NewFromUtf8(isolate, TARGET.c_str());
-			TARGET_PERSISTENT = new Persistent<String>(Isolate::GetCurrent(), str);
+			TARGET_PERSISTENT = new Persistent<String>(isolate, str);
 		}
+
 		return Local<String>::New(isolate, *TARGET_PERSISTENT);
 	}
 
-	Local<String> V8StringConstants::GetToString()
+	Local<String> V8StringConstants::GetToString(Isolate *isolate)
 	{
-		auto isolate = Isolate::GetCurrent();
 		if (TO_STRING_PERSISTENT == nullptr)
 		{
 			auto str = String::NewFromUtf8(isolate, TO_STRING.c_str());
-			TO_STRING_PERSISTENT = new Persistent<String>(Isolate::GetCurrent(), str);
+			TO_STRING_PERSISTENT = new Persistent<String>(isolate, str);
 		}
+
 		return Local<String>::New(isolate, *TO_STRING_PERSISTENT);
 	}
 
-	Local<String> V8StringConstants::GetHiddenJSInstance()
+	Local<String> V8StringConstants::GetHiddenJSInstance(Isolate *isolate)
 	{
-		auto isolate = Isolate::GetCurrent();
 		if (HIDDEN_JS_INSTANCE_PERSISTENT == nullptr)
 		{
 			auto str = String::NewFromUtf8(isolate, HIDDEN_JS_INSTANCE.c_str());
-			HIDDEN_JS_INSTANCE_PERSISTENT = new Persistent<String>(Isolate::GetCurrent(), str);
+			HIDDEN_JS_INSTANCE_PERSISTENT = new Persistent<String>(isolate, str);
 		}
+
 		return Local<String>::New(isolate, *HIDDEN_JS_INSTANCE_PERSISTENT);
 	}
 
-	Local<String> V8StringConstants::GetJavaLong()
+	Local<String> V8StringConstants::GetJavaLong(Isolate *isolate)
 	{
-		auto isolate = Isolate::GetCurrent();
 		if (JAVA_LONG_PERSISTENT == nullptr)
 		{
 			auto str = String::NewFromUtf8(isolate, JAVA_LONG.c_str());
-			JAVA_LONG_PERSISTENT = new Persistent<String>(Isolate::GetCurrent(), str);
+			JAVA_LONG_PERSISTENT = new Persistent<String>(isolate, str);
 		}
+
 		return Local<String>::New(isolate, *JAVA_LONG_PERSISTENT);
 	}
 
-	Local<String> V8StringConstants::GetValue()
+	Local<String> V8StringConstants::GetValue(Isolate *isolate)
 	{
-		auto isolate = Isolate::GetCurrent();
 		if (VALUE_PERSISTENT == nullptr)
 		{
 			auto str = String::NewFromUtf8(isolate, VALUE.c_str());
-			VALUE_PERSISTENT = new Persistent<String>(Isolate::GetCurrent(), str);
+			VALUE_PERSISTENT = new Persistent<String>(isolate, str);
 		}
+
 		return Local<String>::New(isolate, *VALUE_PERSISTENT);
 	}
 
-	Local<String> V8StringConstants::GetValueOf()
+	Local<String> V8StringConstants::GetValueOf(Isolate *isolate)
 	{
-		auto isolate = Isolate::GetCurrent();
 		if (VALUE_OF_PERSISTENT == nullptr)
 		{
 			auto str = String::NewFromUtf8(isolate, VALUE_OF.c_str());
-			VALUE_OF_PERSISTENT = new Persistent<String>(Isolate::GetCurrent(), str);
+			VALUE_OF_PERSISTENT = new Persistent<String>(isolate, str);
 		}
+
 		return Local<String>::New(isolate, *VALUE_OF_PERSISTENT);
 	}
 
-	Local<String> V8StringConstants::GetUncaughtError()
+	Local<String> V8StringConstants::GetUncaughtError(Isolate *isolate)
 	{
-		auto isolate = Isolate::GetCurrent();
 		if (UNCAUGHT_ERROR_PERSISTENT == nullptr)
 		{
 			auto str = String::NewFromUtf8(isolate, UNCAUGHT_ERROR.c_str());
-			UNCAUGHT_ERROR_PERSISTENT = new Persistent<String>(Isolate::GetCurrent(), str);
+			UNCAUGHT_ERROR_PERSISTENT = new Persistent<String>(isolate, str);
 		}
+
 		return Local<String>::New(isolate, *UNCAUGHT_ERROR_PERSISTENT);
 	}
 

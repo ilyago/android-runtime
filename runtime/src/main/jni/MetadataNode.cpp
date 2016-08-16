@@ -19,7 +19,7 @@ using namespace tns;
 
 void MetadataNode::Init(Isolate *isolate)
 {
-	auto key = ConvertToV8String("tns::MetadataKey");
+	auto key = ConvertToV8String(isolate, "tns::MetadataKey");
 	auto cache = GetCache(isolate);
 	cache->MetadataKey = new Persistent<String>(isolate, key);
 }
@@ -58,7 +58,7 @@ Local<Object> MetadataNode::CreateExtendedJSWrapper(Isolate *isolate, ObjectMana
 		extInstance = objectManager->GetEmptyObject(isolate);
 		extInstance->SetInternalField(static_cast<int>(ObjectManager::MetadataNodeKeys::CallSuper), True(isolate));
 		auto extdCtorFunc = Local<Function>::New(isolate, *cacheData.extendedCtorFunction);
-		extInstance->SetPrototype(extdCtorFunc->Get(ConvertToV8String("prototype")));
+		extInstance->SetPrototype(extdCtorFunc->Get(ConvertToV8String(isolate, "prototype")));
 
 		SetInstanceMetadata(isolate, extInstance, cacheData.node);
 	}
@@ -183,8 +183,8 @@ Local<Object> MetadataNode::CreateJSWrapper(Isolate *isolate, ObjectManager *obj
 		if (!obj.IsEmpty())
 		{
 			auto ctorFunc = GetConstructorFunction(isolate);
-			obj->Set(ConvertToV8String("constructor"), ctorFunc);
-			obj->SetPrototype(ctorFunc->Get(ConvertToV8String("prototype")));
+			obj->Set(ConvertToV8String(isolate, "constructor"), ctorFunc);
+			obj->SetPrototype(ctorFunc->Get(ConvertToV8String(isolate, "prototype")));
 			SetInstanceMetadata(isolate, obj, this);
 		}
 	}
@@ -227,8 +227,8 @@ Local<Object> MetadataNode::CreateArrayWrapper(Isolate *isolate)
 	arrayObjectTemplate->SetIndexedPropertyHandler(ArrayIndexedPropertyGetterCallback, ArrayIndexedPropertySetterCallback);
 
 	auto arr = arrayObjectTemplate->NewInstance();
-	arr->SetPrototype(objPrototype->Get(ConvertToV8String("prototype")));
-	arr->SetAccessor(ConvertToV8String("length"), ArrayLengthGetterCallack, nullptr, Local<Value>(), AccessControl::ALL_CAN_READ, PropertyAttribute::DontDelete);
+	arr->SetPrototype(objPrototype->Get(ConvertToV8String(isolate, "prototype")));
+	arr->SetAccessor(ConvertToV8String(isolate, "length"), ArrayLengthGetterCallack, nullptr, Local<Value>(), AccessControl::ALL_CAN_READ, PropertyAttribute::DontDelete);
 
 	SetInstanceMetadata(isolate, arr, this);
 
@@ -244,7 +244,7 @@ Local<Object> MetadataNode::CreatePackageObject(Isolate *isolate)
         auto extData = External::New(isolate, this);
 		const auto &children = *ptrChildren;
 		for (auto childNode: children) {
-            packageObj->SetAccessor(ctx, ConvertToV8String(childNode->name),
+            packageObj->SetAccessor(ctx, ConvertToV8String(isolate, childNode->name),
                                     PackageGetterCallback,
                                     nullptr,
                                     extData);
@@ -256,7 +256,8 @@ Local<Object> MetadataNode::CreatePackageObject(Isolate *isolate)
 
 void MetadataNode::SetClassAccessor(Local<Function>& ctorFunction)
 {
-	auto classFieldName = ConvertToV8String("class");
+	auto isolate = ctorFunction->GetIsolate();
+	auto classFieldName = ConvertToV8String(isolate, "class");
 	ctorFunction->SetAccessor(classFieldName, ClassAccessorGetterCallback, nullptr, Local<Value>(), AccessControl::ALL_CAN_READ, PropertyAttribute::DontDelete);
 }
 
@@ -296,14 +297,14 @@ void MetadataNode::NullObjectAccessorGetterCallback(Local<String> property,const
 
 		auto thiz = info.This();
         Local<Value> hiddenVal;
-        V8GetPrivateValue(isolate, thiz, V8StringConstants::GetNullNodeName(), hiddenVal);
+        V8GetPrivateValue(isolate, thiz, V8StringConstants::GetNullNodeName(isolate), hiddenVal);
 		if(hiddenVal.IsEmpty())
 		{
 			auto node = reinterpret_cast<MetadataNode*>(info.Data().As<External>()->Value());
-            V8SetPrivateValue(isolate, thiz, V8StringConstants::GetNullNodeName(), External::New(isolate, node));
+            V8SetPrivateValue(isolate, thiz, V8StringConstants::GetNullNodeName(isolate), External::New(isolate, node));
 			auto funcTemplate = FunctionTemplate::New(isolate, MetadataNode::NullValueOfCallback);
-			thiz->Delete(V8StringConstants::GetValueOf());
-			thiz->Set(V8StringConstants::GetValueOf(), funcTemplate->GetFunction());
+			thiz->Delete(V8StringConstants::GetValueOf(isolate));
+			thiz->Set(V8StringConstants::GetValueOf(isolate), funcTemplate->GetFunction());
 		}
 
 		info.GetReturnValue().Set(thiz);
@@ -428,7 +429,7 @@ void MetadataNode::SuperAccessorGetterCallback(Local<String> property, const Pro
 	{
 		auto thiz = info.This();
 		auto isolate = info.GetIsolate();
-		auto key = ConvertToV8String("supervalue");
+		auto key = ConvertToV8String(isolate, "supervalue");
         Local<Value> hidenVal;
         V8GetPrivateValue(isolate, thiz, key, hidenVal);
 		auto superValue = hidenVal.As<Object>();
@@ -438,8 +439,8 @@ void MetadataNode::SuperAccessorGetterCallback(Local<String> property, const Pro
 			auto objectManager = runtime->GetObjectManager();
 
 			superValue = objectManager->GetEmptyObject(isolate);
-			bool d = superValue->Delete(V8StringConstants::GetToString());
-			d = superValue->Delete(V8StringConstants::GetValueOf());
+			bool d = superValue->Delete(V8StringConstants::GetToString(isolate));
+			d = superValue->Delete(V8StringConstants::GetValueOf(isolate));
 			superValue->SetInternalField(static_cast<int>(ObjectManager::MetadataNodeKeys::CallSuper), True(isolate));
 
 			superValue->SetPrototype(thiz->GetPrototype().As<Object>()->GetPrototype().As<Object>()->GetPrototype());
@@ -533,7 +534,7 @@ void MetadataNode::SetInstanceMembersFromStaticMetadata(Isolate *isolate, Local<
 			auto funcData = External::New(isolate, callbackData);
 			auto funcTemplate = FunctionTemplate::New(isolate, MethodCallback, funcData);
 			auto func = funcTemplate->GetFunction();
-			auto funcName = ConvertToV8String(entry.name);
+			auto funcName = ConvertToV8String(isolate, entry.name);
 			prototypeTemplate->Set(funcName, funcTemplate); //Wrap(isolate, func, entry.name, origin, false /* isCtorFunc */));
 			lastMethodName = entry.name;
 		}
@@ -548,7 +549,7 @@ void MetadataNode::SetInstanceMembersFromStaticMetadata(Isolate *isolate, Local<
 	{
 		auto entry = s_metadataReader.ReadInstanceFieldEntry(&curPtr);
 
-		auto fieldName = ConvertToV8String(entry.name);
+		auto fieldName = ConvertToV8String(isolate, entry.name);
 		auto fieldInfo = new FieldCallbackData(entry);
 		fieldInfo->declaringType = curType;
 		auto fieldData = External::New(isolate, fieldInfo);
@@ -612,7 +613,7 @@ void MetadataNode::SetInstanceMembersFromRuntimeMetadata(Isolate *isolate, Local
 
 				auto funcData = External::New(isolate, callbackData);
 				auto funcTemplate = FunctionTemplate::New(isolate, MethodCallback, funcData);
-				auto funcName = ConvertToV8String(entry.name);
+				auto funcName = ConvertToV8String(isolate, entry.name);
 				prototypeTemplate->Set(funcName, funcTemplate);
 				lastMethodName = entry.name;
 			}
@@ -620,7 +621,7 @@ void MetadataNode::SetInstanceMembersFromRuntimeMetadata(Isolate *isolate, Local
 		}
 		else if (chKind == 'F')
 		{
-			auto fieldName = ConvertToV8String(entry.name);
+			auto fieldName = ConvertToV8String(isolate, entry.name);
 			auto fieldData = External::New(isolate, new FieldCallbackData(entry));
 			auto access = entry.isFinal ? AccessControl::ALL_CAN_READ : AccessControl::DEFAULT;
 			prototypeTemplate->SetAccessor(fieldName, FieldAccessorGetterCallback, FieldAccessorSetterCallback, fieldData, access, PropertyAttribute::DontDelete);
@@ -674,7 +675,7 @@ void MetadataNode::SetStaticMembers(Isolate *isolate, Local<Function>& ctorFunct
 				auto funcData = External::New(isolate, callbackData);
 				auto funcTemplate = FunctionTemplate::New(isolate, MethodCallback, funcData);
 				auto func = funcTemplate->GetFunction();
-				auto funcName = ConvertToV8String(entry.name);
+				auto funcName = ConvertToV8String(isolate, entry.name);
 
 				DEBUG_WRITE_FORCE("~~~~~~~~~~~~~~ attaching static function: %s to node", entry.name.c_str());
 				ctorFunction->Set(funcName, Wrap(isolate, func, entry.name, origin, false /* isCtorFunc */));
@@ -684,7 +685,7 @@ void MetadataNode::SetStaticMembers(Isolate *isolate, Local<Function>& ctorFunct
 		}
 
 		//attach .extend function
-		auto extendFuncName = V8StringConstants::GetExtend();
+		auto extendFuncName = V8StringConstants::GetExtend(isolate);
 		auto extendFuncTemplate = FunctionTemplate::New(isolate, ExtendCallMethodCallback, External::New(isolate, this));
 		ctorFunction->Set(extendFuncName, extendFuncTemplate->GetFunction());
 
@@ -695,12 +696,12 @@ void MetadataNode::SetStaticMembers(Isolate *isolate, Local<Function>& ctorFunct
 		{
 			auto entry = s_metadataReader.ReadStaticFieldEntry(&curPtr);
 
-			auto fieldName = ConvertToV8String(entry.name);
+			auto fieldName = ConvertToV8String(isolate, entry.name);
 			auto fieldData = External::New(isolate, new FieldCallbackData(entry));
 			ctorFunction->SetAccessor(fieldName, FieldAccessorGetterCallback, FieldAccessorSetterCallback, fieldData, AccessControl::DEFAULT, PropertyAttribute::DontDelete);
 		}
 
-		auto nullObjectName = V8StringConstants::GetNullObject();
+		auto nullObjectName = V8StringConstants::GetNullObject(isolate);
 
 		Local<Value> nullObjectData = External::New(isolate, this);
 		ctorFunction->SetAccessor(nullObjectName, NullObjectAccessorGetterCallback, nullptr, nullObjectData);
@@ -723,7 +724,7 @@ void MetadataNode::InnerClassConstructorCallback(const v8::FunctionCallbackInfo<
 		string extendName;
 		auto className = data->node->m_name;
 
-		SetInstanceMetadata(info.GetIsolate(), thiz, data->node);
+		SetInstanceMetadata(isolate, thiz, data->node);
 
 		ArgsWrapper argWrapper(info, ArgType::Class, outerThis);
 
@@ -754,7 +755,7 @@ void MetadataNode::InnerClassAccessorGetterCallback(Local<String> property, cons
 		auto thiz = info.This();
 		auto node = reinterpret_cast<MetadataNode*>(info.Data().As<External>()->Value());
 
-		auto innerKey = ConvertToV8String("inner:" + node->m_treeNode->name);
+		auto innerKey = ConvertToV8String(isolate, "inner:" + node->m_treeNode->name);
 
         Local<Value> hiddenVal;
         V8GetPrivateValue(isolate, thiz, innerKey, hiddenVal);
@@ -768,7 +769,7 @@ void MetadataNode::InnerClassAccessorGetterCallback(Local<String> property, cons
 			auto innerTypeCtorFuncTemplate = FunctionTemplate::New(isolate, InnerClassConstructorCallback, innerClassData);
 			innerTypeCtorFuncTemplate->InstanceTemplate()->SetInternalFieldCount(static_cast<int>(ObjectManager::MetadataNodeKeys::END));
 			innerTypeCtorFunc = innerTypeCtorFuncTemplate->GetFunction();
-			auto prototypeName = ConvertToV8String("prototype");
+			auto prototypeName = ConvertToV8String(isolate, "prototype");
 			auto innerTypeCtorFuncPrototype = innerTypeCtorFunc->Get(prototypeName).As<Object>();
 			innerTypeCtorFuncPrototype->SetPrototype(ctorFunc->Get(prototypeName));
 
@@ -799,7 +800,7 @@ void MetadataNode::SetInnnerTypes(Isolate *isolate, Local<Function>& ctorFunctio
 	{
 		const auto& children = *treeNode->children;
 
-		auto prototypeTemplate2 = ctorFunction->Get(ConvertToV8String("prototype")).As<Object>();
+		auto prototypeTemplate2 = ctorFunction->Get(ConvertToV8String(isolate, "prototype")).As<Object>();
 
 		for (auto curChild : children)
 		{
@@ -812,12 +813,12 @@ void MetadataNode::SetInnnerTypes(Isolate *isolate, Local<Function>& ctorFunctio
 			{
 				auto innerTypeCtorFuncTemplate = childNode->GetConstructorFunctionTemplate(isolate, curChild);
 				auto innerTypeCtorFunc = Local<Function>::New(isolate, *GetOrCreateInternal(curChild)->m_poCtorFunc);
-				auto innerTypeName = ConvertToV8String(curChild->name);
+				auto innerTypeName = ConvertToV8String(isolate, curChild->name);
 				ctorFunction->Set(innerTypeName, innerTypeCtorFunc);
 			}
 			else
 			{
-				auto innerTypeName = ConvertToV8String(curChild->name);
+				auto innerTypeName = ConvertToV8String(isolate, curChild->name);
 				prototypeTemplate2->SetAccessor(innerTypeName, InnerClassAccessorGetterCallback, nullptr, External::New(isolate, childNode));
 			}
 		}
@@ -958,7 +959,7 @@ void MetadataNode::ExtendedClassConstructorCallback(const v8::FunctionCallbackIn
 
 		SetInstanceMetadata(isolate, thiz, extData->node);
 		thiz->SetInternalField(static_cast<int>(ObjectManager::MetadataNodeKeys::CallSuper), True(isolate));
-        V8SetPrivateValue(isolate, thiz, ConvertToV8String("t::implObj"), implementationObject);
+        V8SetPrivateValue(isolate, thiz, ConvertToV8String(isolate, "t::implObj"), implementationObject);
 
 		ArgsWrapper argWrapper(info, ArgType::Class, Local<Object>());
 
@@ -1030,7 +1031,7 @@ void MetadataNode::InterfaceConstructorCallback(const v8::FunctionCallbackInfo<v
 
 		implementationObject->SetPrototype(thiz->GetPrototype());
 		thiz->SetPrototype(implementationObject);
-        V8SetPrivateValue(isolate, thiz, ConvertToV8String("t::implObj"), implementationObject);
+        V8SetPrivateValue(isolate, thiz, ConvertToV8String(isolate, "t::implObj"), implementationObject);
 
 		ArgsWrapper argWrapper(info, ArgType::Interface, Local<Object>());
 
@@ -1236,16 +1237,16 @@ Local<Object> MetadataNode::GetImplementationObject(Isolate* isolate, const Loca
 	Local<Object> implementationObject;
 
     Local<Value> hiddenVal;
-    V8GetPrivateValue(isolate, object, ConvertToV8String("t::implObj"), hiddenVal);
+    V8GetPrivateValue(isolate, object, ConvertToV8String(isolate, "t::implObj"), hiddenVal);
 	implementationObject = hiddenVal.As<Object>();
 	if (!implementationObject.IsEmpty())
 	{
 		return implementationObject;
 	}
 
-	if (object->HasOwnProperty(V8StringConstants::GetIsPrototypeImplementationObject()))
+	if (object->HasOwnProperty(V8StringConstants::GetIsPrototypeImplementationObject(isolate)))
 	{
-		auto v8Prototype = V8StringConstants::GetPrototype();
+		auto v8Prototype = V8StringConstants::GetPrototype(isolate);
 		if (!object->HasOwnProperty(v8Prototype))
 		{
 			return Local<Object>();
@@ -1292,7 +1293,7 @@ Local<Object> MetadataNode::GetImplementationObject(Isolate* isolate, const Loca
 		else
 		{
             Local<Value> hiddenVal;
-            V8GetPrivateValue(isolate, currentPrototype.As<Object>(), V8StringConstants::GetClassImplementationObject(), hiddenVal);
+            V8GetPrivateValue(isolate, currentPrototype.As<Object>(), V8StringConstants::GetClassImplementationObject(isolate), hiddenVal);
 			auto value = hiddenVal;
 
 			if (!value.IsEmpty())
@@ -1547,7 +1548,7 @@ void MetadataNode::ExtendCallMethodCallback(const v8::FunctionCallbackInfo<v8::V
 			return;
 		}
 
-		auto implementationObjectPropertyName = V8StringConstants::GetClassImplementationObject();
+		auto implementationObjectPropertyName = V8StringConstants::GetClassImplementationObject(isolate);
 		//reuse validation - checks that implementationObject is not reused for different classes
         Local<Value> hiddenVal;
         V8GetPrivateValue(isolate, implementationObject, implementationObjectPropertyName, hiddenVal);
@@ -1571,9 +1572,9 @@ void MetadataNode::ExtendCallMethodCallback(const v8::FunctionCallbackInfo<v8::V
 		extendFuncTemplate->InstanceTemplate()->SetInternalFieldCount(static_cast<int>(ObjectManager::MetadataNodeKeys::END));
 
 		auto extendFunc = extendFuncTemplate->GetFunction();
-		auto prototypeName = ConvertToV8String("prototype");
+		auto prototypeName = ConvertToV8String(isolate, "prototype");
 		implementationObject->SetPrototype(baseClassCtorFunc->Get(prototypeName));
-		implementationObject->SetAccessor(ConvertToV8String("super"), SuperAccessorGetterCallback, nullptr, implementationObject);
+		implementationObject->SetAccessor(ConvertToV8String(isolate, "super"), SuperAccessorGetterCallback, nullptr, implementationObject);
 
 		auto extendFuncPrototype = extendFunc->Get(prototypeName).As<Object>();
 		auto p = extendFuncPrototype->GetPrototype();
@@ -1689,7 +1690,8 @@ bool MetadataNode::GetExtendLocation(string& extendLocation)
 
 MetadataNode* MetadataNode::GetNodeFromHandle(const Local<Object>& value)
 {
-	auto node = GetInstanceMetadata(Isolate::GetCurrent(), value);
+	auto isolate = value->GetIsolate();
+	auto node = GetInstanceMetadata(isolate, value);
 	return node;
 }
 
@@ -1809,7 +1811,7 @@ void MetadataNode::CreateTopLevelNamespaces(Isolate *isolate, const Local<Object
 			auto node = GetOrCreateInternal(treeNode);
 
 			auto packageObj = node->CreateWrapper(isolate);
-			global->Set(ConvertToV8String(node->m_treeNode->name), packageObj);
+			global->Set(ConvertToV8String(isolate, node->m_treeNode->name), packageObj);
 		}
 	}
 }
@@ -1884,13 +1886,13 @@ Local<Function> MetadataNode::Wrap(Isolate* isolate, const Local<Function>& f, c
 	ss << "})()";
 
 	auto str = ss.str();
-	auto source = ConvertToV8String(str);
+	auto source = ConvertToV8String(isolate, str);
 	auto context = isolate->GetCurrentContext();
 
 	TryCatch tc;
 
 	Local<Script> script;
-	ScriptOrigin jsOrigin(ConvertToV8String(origin));
+	ScriptOrigin jsOrigin(ConvertToV8String(isolate, origin));
 	auto maybeScript = Script::Compile(context, source, &jsOrigin).ToLocal(&script);
 
 	if (tc.HasCaught())
@@ -1906,9 +1908,9 @@ Local<Function> MetadataNode::Wrap(Isolate* isolate, const Local<Function>& f, c
 		if (!result.IsEmpty())
 		{
 			ret = result.As<Function>();
-			ret->Set(ConvertToV8String("__func"), f);
+			ret->Set(ConvertToV8String(isolate, "__func"), f);
 
-			auto prototypePropName = ConvertToV8String("prototype");
+			auto prototypePropName = ConvertToV8String(isolate, "prototype");
 			ret->Set(prototypePropName, f->Get(prototypePropName));
 		}
 		else

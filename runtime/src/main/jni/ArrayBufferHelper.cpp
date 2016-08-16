@@ -20,8 +20,8 @@ void ArrayBufferHelper::CreateConvertFunctions(Isolate *isolate, const Local<Obj
 	auto extData = External::New(isolate, this);
 	auto fromFunc = FunctionTemplate::New(isolate, CreateFromCallbackStatic, extData)->GetFunction();
 	auto ctx = isolate->GetCurrentContext();
-	auto arrBufferCtorFunc = global->Get(ConvertToV8String("ArrayBuffer")).As<Function>();
-	arrBufferCtorFunc->Set(ctx, ConvertToV8String("from"), fromFunc);
+	auto arrBufferCtorFunc = global->Get(ConvertToV8String(isolate, "ArrayBuffer")).As<Function>();
+	arrBufferCtorFunc->Set(ctx, ConvertToV8String(isolate, "from"), fromFunc);
 }
 
 void ArrayBufferHelper::CreateFromCallbackStatic(const FunctionCallbackInfo<Value>& info)
@@ -109,7 +109,7 @@ void ArrayBufferHelper::CreateFromCallbackImpl(const FunctionCallbackInfo<Value>
 
 	auto arrayBuffer = ArrayBuffer::New(isolate, data, size);
 	auto ctx = isolate->GetCurrentContext();
-	arrayBuffer->Set(ctx, ConvertToV8String("nativeObject"), argObj);
+	arrayBuffer->Set(ctx, ConvertToV8String(isolate, "nativeObject"), argObj);
 
 	info.GetReturnValue().Set(arrayBuffer);
 }

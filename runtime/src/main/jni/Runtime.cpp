@@ -184,12 +184,12 @@ jobject Runtime::RunScript(JNIEnv *_env, jobject obj, jstring scriptFile)
 	auto filename = ArgConverter::jstringToString(scriptFile);
 	DEBUG_WRITE_FORCE("Script fileName: %s", filename.c_str());
 	auto src = File::ReadText(filename);
-	auto source = ConvertToV8String(src);
+	auto source = ConvertToV8String(isolate, src);
 
 	TryCatch tc;
 
 	Local<Script> script;
-	ScriptOrigin origin(ConvertToV8String(filename));
+	ScriptOrigin origin(ConvertToV8String(isolate, filename));
 	auto maybeScript = Script::Compile(context, source, &origin).ToLocal(&script);
 
 	if (tc.HasCaught())
@@ -314,7 +314,7 @@ void Runtime::PassUncaughtExceptionToJsNative(JNIEnv *env, jobject obj, jthrowab
 
 	//create error message
 	string errMsg = "The application crashed because of an uncaught exception. You can look at \"stackTrace\" or \"nativeException\" for more detailed information about the exception.";
-	auto errObj = Exception::Error(ConvertToV8String(errMsg)).As<Object>();
+	auto errObj = Exception::Error(ConvertToV8String(isolate, errMsg)).As<Object>();
 
 	//create a new native exception js object
 	jint javaObjectID = m_objectManager->GetOrCreateObjectId((jobject) exception);
@@ -335,8 +335,8 @@ void Runtime::PassUncaughtExceptionToJsNative(JNIEnv *env, jobject obj, jthrowab
 	errMsg += "\n" + stackTraceText;
 
 	//create a JS error object
-	errObj->Set(V8StringConstants::GetNativeException(), nativeExceptionObject);
-	errObj->Set(V8StringConstants::GetStackTrace(), ArgConverter::jstringToV8String(stackTrace));
+	errObj->Set(V8StringConstants::GetNativeException(isolate), nativeExceptionObject);
+	errObj->Set(V8StringConstants::GetStackTrace(isolate), ArgConverter::jstringToV8String(isolate, stackTrace));
 
 
 	if (JsDebugger::IsDebuggerActive())
@@ -491,16 +491,16 @@ Isolate* Runtime::PrepareV8Runtime(const string& filesPath, jstring packageName,
 
 	const auto readOnlyFlags = static_cast<PropertyAttribute>(PropertyAttribute::DontDelete | PropertyAttribute::ReadOnly);
 
-	globalTemplate->Set(ConvertToV8String("__log"), FunctionTemplate::New(isolate, CallbackHandlers::LogMethodCallback));
-	globalTemplate->Set(ConvertToV8String("__dumpReferenceTables"), FunctionTemplate::New(isolate, CallbackHandlers::DumpReferenceTablesMethodCallback));
-	globalTemplate->Set(ConvertToV8String("__debugbreak"), FunctionTemplate::New(isolate, JsDebugger::DebugBreakCallback));
-	globalTemplate->Set(ConvertToV8String("__consoleMessage"), FunctionTemplate::New(isolate, JsDebugger::ConsoleMessageCallback));
-	globalTemplate->Set(ConvertToV8String("__enableVerboseLogging"), FunctionTemplate::New(isolate, CallbackHandlers::EnableVerboseLoggingMethodCallback));
-	globalTemplate->Set(ConvertToV8String("__disableVerboseLogging"), FunctionTemplate::New(isolate, CallbackHandlers::DisableVerboseLoggingMethodCallback));
-	globalTemplate->Set(ConvertToV8String("__exit"), FunctionTemplate::New(isolate, CallbackHandlers::ExitMethodCallback));
-	globalTemplate->Set(ConvertToV8String("__runtimeVersion"), ConvertToV8String(NATIVE_SCRIPT_RUNTIME_VERSION), readOnlyFlags);
-	globalTemplate->Set(ConvertToV8String("Worker"), FunctionTemplate::New(isolate, CallbackHandlers::NewThreadCallback));
-	globalTemplate->Set(ConvertToV8String("__printf"), FunctionTemplate::New(isolate, Runtime::PrintMeBabyOneMoreTime));
+	globalTemplate->Set(ConvertToV8String(isolate, "__log"), FunctionTemplate::New(isolate, CallbackHandlers::LogMethodCallback));
+	globalTemplate->Set(ConvertToV8String(isolate, "__dumpReferenceTables"), FunctionTemplate::New(isolate, CallbackHandlers::DumpReferenceTablesMethodCallback));
+	globalTemplate->Set(ConvertToV8String(isolate, "__debugbreak"), FunctionTemplate::New(isolate, JsDebugger::DebugBreakCallback));
+	globalTemplate->Set(ConvertToV8String(isolate, "__consoleMessage"), FunctionTemplate::New(isolate, JsDebugger::ConsoleMessageCallback));
+	globalTemplate->Set(ConvertToV8String(isolate, "__enableVerboseLogging"), FunctionTemplate::New(isolate, CallbackHandlers::EnableVerboseLoggingMethodCallback));
+	globalTemplate->Set(ConvertToV8String(isolate, "__disableVerboseLogging"), FunctionTemplate::New(isolate, CallbackHandlers::DisableVerboseLoggingMethodCallback));
+	globalTemplate->Set(ConvertToV8String(isolate, "__exit"), FunctionTemplate::New(isolate, CallbackHandlers::ExitMethodCallback));
+	globalTemplate->Set(ConvertToV8String(isolate, "__runtimeVersion"), ConvertToV8String(isolate, NATIVE_SCRIPT_RUNTIME_VERSION), readOnlyFlags);
+	globalTemplate->Set(ConvertToV8String(isolate, "Worker"), FunctionTemplate::New(isolate, CallbackHandlers::NewThreadCallback));
+	globalTemplate->Set(ConvertToV8String(isolate, "__printf"), FunctionTemplate::New(isolate, Runtime::PrintMeBabyOneMoreTime));
 
 	//// TODO: Pete: attach "onmessage" "postMessage" "onerror" to global context on consecutively created isolates (threads)
 	if(jsDebugger == nullptr) {
@@ -508,18 +508,16 @@ Isolate* Runtime::PrepareV8Runtime(const string& filesPath, jstring packageName,
 //		auto onErrorFuncTemplate = FunctionTemplate::New(isolate, Runtime::WorkerThreadOnErrorCallback);
 		auto postMessageFuncTemplate = FunctionTemplate::New(isolate, Runtime::WorkerThreadPostMessageCallback);
 
-		globalTemplate->SetAccessor(ConvertToV8String("onmessage"), Runtime::WorkerThreadOnMessageFunctionGetterCallback, Runtime::WorkerThreadOnMessageFunctionSetterCallback);
+		globalTemplate->SetAccessor(ConvertToV8String(isolate, "onmessage"), Runtime::WorkerThreadOnMessageFunctionGetterCallback, Runtime::WorkerThreadOnMessageFunctionSetterCallback);
 
-//		globalTemplate->Set(ConvertToV8String("onmessage"), onMsgFuncTemplate);
-//		globalTemplate->Set(ConvertToV8String("onerror"), onErrorFuncTemplate);
-		globalTemplate->Set(ConvertToV8String("postMessage"), postMessageFuncTemplate);
+		globalTemplate->Set(ConvertToV8String(isolate, "postMessage"), postMessageFuncTemplate);
 	}
 
 	m_weakRef.Init(isolate, globalTemplate, m_objectManager);
 
 	SimpleProfiler::Init(isolate, globalTemplate);
 
-	CallbackHandlers::CreateGlobalCastFunctions(globalTemplate);
+	CallbackHandlers::CreateGlobalCastFunctions(isolate, globalTemplate);
 
 	Local<Context> context = Context::New(isolate, nullptr, globalTemplate);
 	PrimaryContext = new Persistent<Context>(isolate, context);
@@ -532,8 +530,8 @@ Isolate* Runtime::PrepareV8Runtime(const string& filesPath, jstring packageName,
 
 	auto global = context->Global();
 
-	global->ForceSet(ConvertToV8String("global"), global, readOnlyFlags);
-	global->ForceSet(ConvertToV8String("__global"), global, readOnlyFlags);
+	global->ForceSet(ConvertToV8String(isolate, "global"), global, readOnlyFlags);
+	global->ForceSet(ConvertToV8String(isolate, "__global"), global, readOnlyFlags);
 
 	ArgConverter::Init(isolate);
 
@@ -580,6 +578,7 @@ void Runtime::WorkerThreadOnMessageFunctionSetterCallback(v8::Local<v8::String> 
 		auto thiz = info.This();
 		auto func = Handle<Function>::Cast(value);
 
+		// TODO: Pete: temporary patching
 		workerThreadOnMessageFunc = new Persistent<Function>(Isolate::GetCurrent(), func);
 		info.GetReturnValue().Set(func);
 	} else {
@@ -634,14 +633,14 @@ void Runtime::PrepareExtendFunction(Isolate *isolate, jstring filesPath)
 	const char* content = File::ReadText(fullPath, length, isNew);
 
 	TryCatch tc;
-	auto cmd = ConvertToV8String(content, length);
+	auto cmd = ConvertToV8String(isolate, content, length);
 
 	if (isNew)
 	{
 		delete[] content;
 	}
 
-	auto origin = ConvertToV8String(fullPath);
+	auto origin = ConvertToV8String(isolate, fullPath);
 	DEBUG_WRITE("Compiling prepareExtend.js script");
 
 	auto script = Script::Compile(cmd, origin);

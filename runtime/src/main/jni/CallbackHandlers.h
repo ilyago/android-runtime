@@ -76,7 +76,7 @@ namespace tns
 
 			static v8::Local<v8::Object> GetImplementationObjectFromArg(const v8::FunctionCallbackInfo<v8::Value>& args);
 
-			static void CreateGlobalCastFunctions(const v8::Local<v8::ObjectTemplate>& globalTemplate);
+			static void CreateGlobalCastFunctions(v8::Isolate *isolate, const v8::Local<v8::ObjectTemplate>& globalTemplate);
 
 			static std::vector<std::string> GetTypeMetadata(const std::string& name, int index);
 

@@ -152,7 +152,7 @@ void ArrayElementAccessor::SetArrayElement(Isolate *isolate, const Local<Object>
 		jlong longElementValue;
 		if (value->IsObject())
 		{
-			longElementValue = (jlong) ArgConverter::ConvertToJavaLong(value);
+			longElementValue = (jlong) ArgConverter::ConvertToJavaLong(isolate, value);
 		}
 		else
 		{
@@ -214,7 +214,7 @@ Local<Value> ArrayElementAccessor::ConvertToJsValue(Isolate *isolate, ObjectMana
 	}
 	else if (elementSignature == "C")
 	{
-		jsValue = ConvertToV8String((const char*) value, 1);
+		jsValue = ConvertToV8String(isolate, (const char*) value, 1);
 	}
 	else if (elementSignature == "S")
 	{
@@ -244,7 +244,7 @@ Local<Value> ArrayElementAccessor::ConvertToJsValue(Isolate *isolate, ObjectMana
 
 			if (isString)
 			{
-				jsValue = ArgConverter::jstringToV8String(*(jstring*) value);
+				jsValue = ArgConverter::jstringToV8String(isolate, *(jstring*) value);
 			}
 			else
 			{

@@ -30,25 +30,25 @@ namespace tns
 	class V8StringConstants
 	{
 		public:
-			static v8::Local<v8::String> GetClassImplementationObject();
-			static v8::Local<v8::String> GetDebugName();
-			static v8::Local<v8::String> GetExtend();
-			static v8::Local<v8::String> GetNullObject();
-			static v8::Local<v8::String> GetNullNodeName();
-			static v8::Local<v8::String> GetIsPrototypeImplementationObject();
-			static v8::Local<v8::String> GetNativeException();
-			static v8::Local<v8::String> GetStackTrace();
-			static v8::Local<v8::String> GetLongNumber();
-			static v8::Local<v8::String> GetPrototype();
-			static v8::Local<v8::String> GetSuper();
-			static v8::Local<v8::String> GetTSuper();
-			static v8::Local<v8::String> GetTarget();
-			static v8::Local<v8::String> GetToString();
-			static v8::Local<v8::String> GetHiddenJSInstance();
-			static v8::Local<v8::String> GetJavaLong();
-			static v8::Local<v8::String> GetValueOf();
-			static v8::Local<v8::String> GetValue();
-			static v8::Local<v8::String> GetUncaughtError();
+			static v8::Local<v8::String> GetClassImplementationObject(v8::Isolate *isolate);
+			static v8::Local<v8::String> GetDebugName(v8::Isolate *isolate);
+			static v8::Local<v8::String> GetExtend(v8::Isolate *isolate);
+			static v8::Local<v8::String> GetNullObject(v8::Isolate *isolate);
+			static v8::Local<v8::String> GetNullNodeName(v8::Isolate *isolate);
+			static v8::Local<v8::String> GetIsPrototypeImplementationObject(v8::Isolate *isolate);
+			static v8::Local<v8::String> GetNativeException(v8::Isolate *isolate);
+			static v8::Local<v8::String> GetStackTrace(v8::Isolate *isolate);
+			static v8::Local<v8::String> GetLongNumber(v8::Isolate *isolate);
+			static v8::Local<v8::String> GetPrototype(v8::Isolate *isolate);
+			static v8::Local<v8::String> GetSuper(v8::Isolate *isolate);
+			static v8::Local<v8::String> GetTSuper(v8::Isolate *isolate);
+			static v8::Local<v8::String> GetTarget(v8::Isolate *isolate);
+			static v8::Local<v8::String> GetToString(v8::Isolate *isolate);
+			static v8::Local<v8::String> GetHiddenJSInstance(v8::Isolate *isolate);
+			static v8::Local<v8::String> GetJavaLong(v8::Isolate *isolate);
+			static v8::Local<v8::String> GetValueOf(v8::Isolate *isolate);
+			static v8::Local<v8::String> GetValue(v8::Isolate *isolate);
+			static v8::Local<v8::String> GetUncaughtError(v8::Isolate *isolate);
 
 			static const std::string CLASS_IMPLEMENTATION_OBJECT;
 			static const std::string DEBUG_NAME;

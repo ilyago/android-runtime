@@ -24,6 +24,7 @@
 #include "FieldCallbackData.h"
 #include "ArgsWrapper.h"
 #include "ObjectManager.h"
+#include "include/v8.h"
 #include <string>
 #include <vector>
 #include <map>
@@ -223,7 +224,8 @@ namespace tns
 					:
 							node(_node), extendedName(_extendedName), fullClassName(_fullClassName)
 					{
-						implementationObject = new v8::Persistent<v8::Object>(v8::Isolate::GetCurrent(), _implementationObject);
+						auto isolate = _implementationObject->GetIsolate();
+						implementationObject = new v8::Persistent<v8::Object>(isolate, _implementationObject);
 					}
 
 					MetadataNode *node;
@@ -244,7 +246,8 @@ namespace tns
 					:
 							extendedName(_extendedName), node(_node)
 					{
-						extendedCtorFunction = new v8::Persistent<v8::Function>(v8::Isolate::GetCurrent(), extCtorFunc);
+						auto isolate = extCtorFunc->GetIsolate();
+						extendedCtorFunction = new v8::Persistent<v8::Function>(isolate, extCtorFunc);
 					}
 					v8::Persistent<v8::Function> *extendedCtorFunction;
 					std::string extendedName;

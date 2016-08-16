@@ -267,7 +267,7 @@ bool JsArgConverter::ConvertArg(const Local<Value>& arg, int index)
 			case CastType::None:
 				obj = objectManager->GetJavaObjectByJsObject(jsObject);
 
-				V8GetPrivateValue(m_isolate, jsObject, ConvertToV8String(V8StringConstants::NULL_NODE_NAME), castValue);
+				V8GetPrivateValue(m_isolate, jsObject, ConvertToV8String(m_isolate, V8StringConstants::NULL_NODE_NAME), castValue);
 
 				if(!castValue.IsEmpty()) {
 					SetConvertedObject(index, nullptr);
@@ -396,7 +396,7 @@ bool JsArgConverter::ConvertJavaScriptBoolean(const Local<Value>& jsValue, int i
 		else
 		{
 			auto boolObj = Local<BooleanObject>::Cast(jsValue);
-			auto val = boolObj->Get(V8StringConstants::GetValueOf());
+			auto val = boolObj->Get(V8StringConstants::GetValueOf(m_isolate));
 			if (!val.IsEmpty() && val->IsFunction())
 			{
 				argValue = val.As<Function>()->Call(boolObj, 0, nullptr)->BooleanValue();

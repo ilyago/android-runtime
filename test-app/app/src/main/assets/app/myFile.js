@@ -1,3 +1,4 @@
+/*
 //var a = Worker("asdasdasdasdasdasdas");
 
 //android.util.Log.v("~AJKSHDJKASHKJDHASJKDHASDJAS", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAASDJKLASDJKLQWUI(DJKLzx ")
@@ -5,20 +6,15 @@
 
 obj = new java.lang.String("PESHOOO");
 
-//__printf(obj);
+__printf(obj);
 
 android.util.Log.v("ASDASDASDA", obj);
 
 var i = 5;
-//while(true) {
-//    i++;
-//    if(i % 10000000 === 0) {
-//        __printf();
-//    }
-//}
+
 //throw "PESHOOOOOOOOOOO JEEEEEEEENKIIIIIIIIIIIIIIIIIIIIIIIIIIIIINS";
 
-var pesho = require("./myRequiredFile.js");
+//
 
 var pToStr = pesho.toString();
 
@@ -37,6 +33,14 @@ a = [123, "123123", {
 //    __printf("On message inside myFile.js");
 //}
 //
+
+__printf("LALALALAALLA")
+
 //postMessage("Hey, it's the worker talking!");
 
 //onmessage("aaaa"); // this will be manually called from within v8
+*/
+
+//require("mainpage");
+//execute(); //run jasmine
+

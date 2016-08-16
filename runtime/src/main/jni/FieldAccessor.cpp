@@ -115,7 +115,7 @@ Local<Value> FieldAccessor::GetJavaField(Isolate *isolate, const Local<Object>& 
 				JniLocalRef str(env.NewString(&result, 1));
 				jboolean bol = true;
 				const char* resP = env.GetStringUTFChars(str, &bol);
-				fieldResult = handleScope.Escape(ConvertToV8String(resP, 1));
+				fieldResult = handleScope.Escape(ConvertToV8String(isolate, resP, 1));
 				env.ReleaseStringUTFChars(str, resP);
 				break;
 			}
@@ -217,7 +217,7 @@ Local<Value> FieldAccessor::GetJavaField(Isolate *isolate, const Local<Object>& 
 			bool isString = fieldTypeName == "java/lang/String";
 			if (isString)
 			{
-				auto resultV8Value = ArgConverter::jstringToV8String((jstring) result);
+				auto resultV8Value = ArgConverter::jstringToV8String(isolate, (jstring) result);
 				fieldResult = handleScope.Escape(resultV8Value);
 			}
 			else
@@ -376,7 +376,7 @@ void FieldAccessor::SetJavaField(Isolate *isolate, const Local<Object>& target, 
 			}
 			case 'J': //long
 			{
-				jlong longValue = static_cast<jlong>(ArgConverter::ConvertToJavaLong(value));
+				jlong longValue = static_cast<jlong>(ArgConverter::ConvertToJavaLong(isolate, value));
 				if (isStatic)
 				{
 					env.SetStaticLongField(clazz, fieldId, longValue);

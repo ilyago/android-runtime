@@ -11,11 +11,11 @@ namespace tns
 
 	jstring ConvertToJavaString(const v8::Local<v8::Value>& jsValue);
 
-	v8::Local<v8::String> ConvertToV8String(const jchar* data, int length);
+	v8::Local<v8::String> ConvertToV8String(v8::Isolate* isolate, const jchar* data, int length);
 
-	v8::Local<v8::String> ConvertToV8String(const std::string& s);
+	v8::Local<v8::String> ConvertToV8String(v8::Isolate* isolate, const std::string& s);
 
-	v8::Local<v8::String> ConvertToV8String(const char *data, int length);
+	v8::Local<v8::String> ConvertToV8String(v8::Isolate* isolate, const char *data, int length);
 
 	bool V8GetPrivateValue(v8::Isolate *isolate, const v8::Local<v8::Object>& obj, const v8::Local<v8::String>& propName, v8::Local<v8::Value>& out);
 

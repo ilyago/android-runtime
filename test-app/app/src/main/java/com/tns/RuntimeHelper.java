@@ -168,89 +168,17 @@ public final class RuntimeHelper {
         }
 
         Runtime runtime = null;
-//		boolean showErrorIntent = hasErrorIntent(app);
-//		if (!showErrorIntent) {
-//			NativeScriptUncaughtExceptionHandler exHandler = new NativeScriptUncaughtExceptionHandler(logger, app);
-//
-//			Thread.setDefaultUncaughtExceptionHandler(exHandler);
-//
-//			DefaultExtractPolicy extractPolicy = new DefaultExtractPolicy(logger);
-//			boolean skipAssetExtraction = Util.runPlugin(logger, app);
-//
-//			String appName = app.getPackageName();
-//			File rootDir = new File(app.getApplicationInfo().dataDir);
-//			File appDir = app.getFilesDir();
-//
-//			try {
-//				appDir = appDir.getCanonicalFile();
-//			} catch (IOException e1) {
-//			}
-//
-//			if (!skipAssetExtraction) {
-//				if(logger.isEnabled()) {
-//					logger.write("Extracting assets...");
-//				}
-//
-//				AssetExtractor aE = new AssetExtractor(null, logger);
-//
-//				String outputDir = app.getFilesDir().getPath() + File.separator;
-//
-//				aE.extractAssets(app, "app", outputDir, extractPolicy);
-//				aE.extractAssets(app, "internal", outputDir, extractPolicy);
-//				aE.extractAssets(app, "metadata", outputDir, extractPolicy);
-//
-//				// enable with flags?
-//				boolean shouldExtractSnapshots = true;
-//
-//				// will extract snapshot of the device appropriate architecture
-//				if(shouldExtractSnapshots) {
-//					if(logger.isEnabled()) {
-//						logger.write("Extracting snapshot blob");
-//					}
-//
-//					aE.extractAssets(app,  "snapshots/" + Build.CPU_ABI, outputDir, extractPolicy);
-//				}
-//
-//				extractPolicy.setAssetsThumb(app);
-//			}
 
         Object[] v8Config = new Object[1];//V8Config.fromPackageJSON(appDir);
 
-//			ClassLoader classLoader = app.getClassLoader();
-//			File dexDir = new File(rootDir, "code_cache/secondary-dexes");
         String dexThumb = null;
-//			try {
-//				dexThumb = Util.getDexThumb(app);
-//			} catch (NameNotFoundException e) {
-//				e.printStackTrace();
-//			}
-
-//			ThreadScheduler workThreadScheduler = new WorkThreadScheduler(new Handler(Looper.getMainLooper()));
 
         Logger logger = new LogcatLogger();
         Configuration config = new Configuration(null, null, null, appName, null, null, new File(appDir), null, null, null, null);
         runtime = new Runtime(config);
 
-//			exHandler.setRuntime(runtime);
-//			if (NativeScriptSyncService.isSyncEnabled(app)) {
-
-//				NativeScriptSyncService syncService = new NativeScriptSyncService(runtime, logger, app);
-//
-//				syncService.sync();
-//				syncService.startServer();
-//
-//				// preserve this instance as strong reference
-//				// do not preserve in NativeScriptApplication field inorder to
-//				// make the code more portable
-//				// @@@
-//				// Runtime.getOrCreateJavaObjectID(syncService);
-//			} else {
-//				if (logger.isEnabled()) {
-//					logger.write("NativeScript LiveSync is not enabled.");
-//				}
-//			}
-
         runtime.simplisticInit(logger);
+
         // TODO: Pete: RESOLVE FULL PATH to file on device
 //        filePath = "/data/data/com.tns.android_runtime_testapp/files/app/myFile.js";
         runtime.runGivenScript(filePath);

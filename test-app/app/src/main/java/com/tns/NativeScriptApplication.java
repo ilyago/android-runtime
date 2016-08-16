@@ -14,7 +14,7 @@ public class NativeScriptApplication extends android.app.Application {
     public void onCreate() {
 		super.onCreate();
 		com.tns.Runtime runtime = RuntimeHelper.initRuntime(this);
-        if (runtime !=null) {
+        if (runtime != null) {
             runtime.run();
         }
     }

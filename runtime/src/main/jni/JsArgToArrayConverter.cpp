@@ -296,7 +296,7 @@ bool JsArgToArrayConverter::ConvertArg(const Local<Value>& arg, int index)
 			case CastType::None:
 				obj = objectManager->GetJavaObjectByJsObject(jsObj);
 
-				V8GetPrivateValue(m_isolate, jsObj, V8StringConstants::GetNullNodeName(), castValue);
+				V8GetPrivateValue(m_isolate, jsObj, V8StringConstants::GetNullNodeName(m_isolate), castValue);
 
 				if(!castValue.IsEmpty()) {
 					auto node = reinterpret_cast<MetadataNode*>(castValue.As<External>()->Value());

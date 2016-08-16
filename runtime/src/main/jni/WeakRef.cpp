@@ -18,7 +18,7 @@ void WeakRef::Init(v8::Isolate *isolate, Local<ObjectTemplate>& globalObjectTemp
 {
 	m_objectManager = objectManager;
 	auto extData = External::New(isolate, this);
-	globalObjectTemplate->Set(ConvertToV8String("WeakRef"), FunctionTemplate::New(isolate, ConstructorCallback, extData));
+	globalObjectTemplate->Set(ConvertToV8String(isolate, "WeakRef"), FunctionTemplate::New(isolate, ConstructorCallback, extData));
 }
 
 void WeakRef::ConstructorCallback(const FunctionCallbackInfo<Value>& args)
@@ -68,9 +68,9 @@ void WeakRef::ConstructorCallbackImpl(const FunctionCallbackInfo<Value>& args)
 				poTarget->SetWeak(callbackState, WeakTargetCallback, WeakCallbackType::kFinalizer);
 				poHolder->SetWeak(callbackState, WeakHolderCallback, WeakCallbackType::kFinalizer);
 
-				weakRef->Set(ConvertToV8String("get"), GetGetterFunction(isolate));
-				weakRef->Set(ConvertToV8String("clear"), GetClearFunction(isolate));
-				V8SetPrivateValue(isolate, weakRef, V8StringConstants::GetTarget(), External::New(isolate, poTarget));
+				weakRef->Set(ConvertToV8String(isolate, "get"), GetGetterFunction(isolate));
+				weakRef->Set(ConvertToV8String(isolate, "clear"), GetClearFunction(isolate));
+				V8SetPrivateValue(isolate, weakRef, V8StringConstants::GetTarget(isolate), External::New(isolate, poTarget));
 
 				args.GetReturnValue().Set(weakRef);
 			}
@@ -103,7 +103,7 @@ void WeakRef::WeakTargetCallback(const WeakCallbackInfo<CallbackState>& data)
 	if (poHolder != nullptr)
 	{
 		auto holder = Local<Object>::New(isolate, *poHolder);
-		V8SetPrivateValue(isolate, holder, V8StringConstants::GetTarget(), External::New(isolate, nullptr));
+		V8SetPrivateValue(isolate, holder, V8StringConstants::GetTarget(isolate), External::New(isolate, nullptr));
 	}
 
 	if (callbackState->holder == nullptr)
@@ -122,7 +122,7 @@ void WeakRef::WeakHolderCallback(const WeakCallbackInfo<CallbackState>& data)
 		auto holder = Local<Object>::New(isolate, *poHolder);
 
 		Local<Value> hiddenVal;
-		V8GetPrivateValue(isolate, holder, V8StringConstants::GetTarget(), hiddenVal);
+		V8GetPrivateValue(isolate, holder, V8StringConstants::GetTarget(isolate), hiddenVal);
 		auto poTarget = reinterpret_cast<Persistent<Object>*>(hiddenVal.As<External>()->Value());
 
 		if (poTarget != nullptr)
@@ -163,7 +163,7 @@ void WeakRef::ClearCallback(const FunctionCallbackInfo<Value>& args)
 		auto holder = args.This();
 		auto isolate = args.GetIsolate();
 
-		V8SetPrivateValue(isolate, holder, V8StringConstants::GetTarget(), External::New(isolate, nullptr));
+		V8SetPrivateValue(isolate, holder, V8StringConstants::GetTarget(isolate), External::New(isolate, nullptr));
 	}
 	catch (NativeScriptException& e)
 	{
@@ -187,9 +187,9 @@ void WeakRef::GettertCallback(const FunctionCallbackInfo<Value>& args)
 	{
 		auto holder = args.This();
 		Local<Value> hiddenVal;
-		V8GetPrivateValue(args.GetIsolate(), holder, V8StringConstants::GetTarget(), hiddenVal);
-		auto poTarget = reinterpret_cast<Persistent<Object>*>(hiddenVal.As<External>()->Value());
 		auto isolate = args.GetIsolate();
+		V8GetPrivateValue(isolate, holder, V8StringConstants::GetTarget(isolate), hiddenVal);
+		auto poTarget = reinterpret_cast<Persistent<Object>*>(hiddenVal.As<External>()->Value());
 
 		if (poTarget != nullptr)
 		{

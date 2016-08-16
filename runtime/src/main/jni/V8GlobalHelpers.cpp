@@ -26,23 +26,20 @@ jstring tns::ConvertToJavaString(const Local<Value>& value)
 	return env.NewString((const jchar*) *stringValue, stringValue.length());
 }
 
-Local<String> tns::ConvertToV8String(const jchar* data, int length)
+Local<String> tns::ConvertToV8String(Isolate* isolate, const jchar* data, int length)
 {
-	auto isolate = Isolate::GetCurrent();
 	return String::NewFromTwoByte(isolate, (const uint16_t*) data, String::kNormalString, length);
 }
 
-Local<String> tns::ConvertToV8String(const string& s)
+Local<String> tns::ConvertToV8String(Isolate* isolate, const string& s)
 {
-	auto isolate = Isolate::GetCurrent();
 	Local<String> str;
 	String::NewFromUtf8(isolate, s.c_str(), NewStringType::kNormal, s.length()).ToLocal(&str);
 	return str;
 }
 
-Local<String> tns::ConvertToV8String(const char *data, int length)
+Local<String> tns::ConvertToV8String(Isolate* isolate, const char *data, int length)
 {
-	auto isolate = Isolate::GetCurrent();
 	return String::NewFromUtf8(isolate, (const char *) data, String::kNormalString, length);
 }
 
