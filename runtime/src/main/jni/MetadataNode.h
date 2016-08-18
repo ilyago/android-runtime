@@ -74,8 +74,6 @@ namespace tns
 
 			struct MetadataNodeCache;
 
-			enum class MetadataCacheItemType;
-
 			MetadataNode(MetadataTreeNode *treeNode);
 
 			v8::Local<v8::Object> CreatePackageObject(v8::Isolate *isolate);
@@ -97,8 +95,6 @@ namespace tns
 			static MetadataNode* GetOrCreateInternal(MetadataTreeNode *treeNode);
 
 			static MetadataTreeNode* GetOrCreateTreeNodeByName(const std::string& className);
-
-			static MetadataTreeNode* GetOrCreateTreeNodeByNameHelper(const std::string& className);
 
 			static MetadataEntry GetChildMetadataForPackage(MetadataNode *node, const std::string& propName);
 
@@ -147,8 +143,6 @@ namespace tns
 			std::string m_name;
 			std::string m_implType;
 			bool m_isArray;
-			std::vector<MetadataCacheItem> m_childCache;
-			std::vector<MetadataCacheItem> m_superMethodCache;
 
 			static std::string TNS_PREFIX;
 			static MetadataReader s_metadataReader;
@@ -157,13 +151,6 @@ namespace tns
 			static std::map<MetadataTreeNode*, MetadataNode*> s_treeNode2NodeCache;
 			static std::map<v8::Isolate*, MetadataNodeCache*> s_cache;
 			static bool s_profilerEnabled;
-
-			enum class MetadataCacheItemType
-			{
-				None,
-				NonField,
-				Field
-			};
 
 			struct CtorCacheItem
 			{
@@ -186,26 +173,6 @@ namespace tns
 					}
 
 					MethodCallbackData(MetadataNode *_node)
-					:
-							node(_node), parent(nullptr), isSuper(false)
-					{
-					}
-
-					std::vector<MetadataEntry> candidates;
-					MetadataNode *node;
-					MethodCallbackData *parent;
-					bool isSuper;
-			};
-
-			struct ConstructorCallbackData
-			{
-					ConstructorCallbackData()
-					:
-							node(nullptr), parent(nullptr), isSuper(false)
-					{
-					}
-
-					ConstructorCallbackData(MetadataNode *_node)
 					:
 							node(_node), parent(nullptr), isSuper(false)
 					{
@@ -272,19 +239,6 @@ namespace tns
 
 					v8::Persistent<v8::Object> *outerThis;
 					MetadataNode *node;
-			};
-
-			struct MetadataCacheItem
-			{
-					MetadataCacheItem(const std::string& methodName, v8::Persistent<v8::Value> *po, MetadataCacheItemType itemType)
-					:
-							name(methodName), pv(po), type(itemType), entry(MetadataEntry())
-					{
-					}
-					std::string name;
-					MetadataCacheItemType type;
-					MetadataEntry entry;
-					v8::Persistent<v8::Value> *pv;
 			};
 
 			struct MetadataNodeCache
