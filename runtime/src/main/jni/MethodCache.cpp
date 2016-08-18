@@ -78,7 +78,7 @@ MethodCache::CacheMethodInfo MethodCache::ResolveConstructorSignature(const Args
 
 	if (it == s_mthod_ctor_signature_cache.end())
 	{
-		auto signature = ResolveConstructor(args, javaClass, isInterface, argWrapper.outerThis);
+		auto signature = ResolveConstructor(args, javaClass, isInterface);
 
 		DEBUG_WRITE("ResolveConstructorSignature %s='%s'", encoded_ctor_signature.c_str(), signature.c_str());
 
@@ -263,12 +263,12 @@ string MethodCache::ResolveJavaMethod(const FunctionCallbackInfo<Value>& args, c
 	return resolvedSignature;
 }
 
-string MethodCache::ResolveConstructor(const FunctionCallbackInfo<Value>& args, jclass javaClass, bool isInterface, Local<Object> outerThis)
+string MethodCache::ResolveConstructor(const FunctionCallbackInfo<Value>& args, jclass javaClass, bool isInterface)
 {
 	JEnv env;
 	string resolvedSignature;
 
-	JsArgToArrayConverter argConverter(args, isInterface, outerThis);
+	JsArgToArrayConverter argConverter(args, isInterface);
 	if (argConverter.IsValid())
 	{
 		jobjectArray javaArgs = argConverter.ToJavaArray();
