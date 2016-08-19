@@ -90,8 +90,9 @@ bool CallbackHandlers::RegisterInstance(Isolate *isolate, const Local<Object> &j
     auto mi = MethodCache::ResolveConstructorSignature(argWrapper, fullClassName,
                                                        generatedJavaClass, isInterface);
 
+    // while the "instance" is being created, if an exception is thrown during the construction
+    // this scope will guarantee the "javaObjectID" will be set to -1 and won't have an invalid value
     jobject instance;
-
     {
         JavaObjectIdScope objIdScope(env, CURRENT_OBJECTID_FIELD_ID, runtime->GetJavaRuntime(),
                                      javaObjectID);
@@ -169,10 +170,9 @@ jclass CallbackHandlers::ResolveClass(Isolate *isolate, const string &fullClassn
     return globalRefToGeneratedClass;
 }
 
-// Called by ExtendCallMethodCallback when extending a class
-string CallbackHandlers::ResolveClassName(Isolate *isolate, const string& fullClassname, const Local<Object>& implementationObject, bool isInterface)
+// Called by ExtendMethodCallback when extending a class
+string CallbackHandlers::ResolveClassName(Isolate *isolate, jclass &clazz)
 {
-	auto clazz = ResolveClass(isolate, fullClassname, implementationObject, isInterface);
 	auto runtime = Runtime::GetRuntime(isolate);
 	auto objectManager = runtime->GetObjectManager();
 	auto className = objectManager->GetClassName(clazz);
